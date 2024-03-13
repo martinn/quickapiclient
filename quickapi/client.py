@@ -39,7 +39,13 @@ class BaseResponseBody(Generic[ResponseBodyT]):
         return cattrs.structure(value, cls)
 
 
-class BaseClientMethod(Enum):
+@define
+class BaseResponse(Generic[ResponseBodyT]):
+    client_response: httpx.Response
+    body: ResponseBodyT
+
+
+class BaseApiMethod(Enum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -50,25 +56,18 @@ class BaseClientMethod(Enum):
     TRACE = "TRACE"
 
 
-@define
-class BaseResponse(Generic[ResponseBodyT]):
-    response: httpx.Response
-    body: ResponseBodyT
-
-
-# TODO: Should this be BaseApi?
-class BaseClient(Generic[ResponseBodyT]):
+class BaseApi(Generic[ResponseBodyT]):
     url: str
-    method: BaseClientMethod = BaseClientMethod.GET
+    method: BaseApiMethod = BaseApiMethod.GET
     request_params: type[BaseRequestParams] | None = None
     request_body: type[BaseRequestBody] | None = None
     response_body: type[ResponseBodyT]
 
+    _client: httpx.Client
     _request_params_cls: type[BaseRequestParams] = BaseRequestParams
     _request_body_cls: type[BaseRequestBody] = BaseRequestBody
     _response_body_cls: type[ResponseBodyT]
     _response: BaseResponse[ResponseBodyT] | None = None
-    _client: httpx.Client
 
     @classmethod
     def __init_subclass__(cls, **kwargs: object) -> None:
@@ -108,9 +107,9 @@ class BaseClient(Generic[ResponseBodyT]):
         request_params = request_params or self._request_params_cls()
         request_body = request_body or self._request_body_cls()
 
-        if self.method == BaseClientMethod.GET:
+        if self.method == BaseApiMethod.GET:
             response = self._client.get(url=self.url, params=request_params.to_dict())
-        elif self.method == BaseClientMethod.POST:
+        elif self.method == BaseApiMethod.POST:
             response = self._client.post(
                 url=self.url,
                 params=request_params.to_dict(),
@@ -120,6 +119,6 @@ class BaseClient(Generic[ResponseBodyT]):
             raise NotImplementedError(f"Method {self.method} not implemented")
 
         body = self._response_body_cls.from_dict(response.json())
-        self._response = BaseResponse(response=response, body=body)
+        self._response = BaseResponse(client_response=response, body=body)
 
         return self._response
