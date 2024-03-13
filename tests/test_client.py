@@ -28,73 +28,87 @@ class ResponseBody(quickapi.BaseResponseBody):
     data: list[Fact] = field(factory=list)
 
 
-class GetApiClient(quickapi.BaseClient):
-    url: str = "https://catfact.ninja/facts"
+# TODO: Build real mock API to easily test various scenarios?
+
+
+
+
+class GetApi(quickapi.BaseClient[ResponseBody]):
+    url = "https://example.com/facts"
     response_body = ResponseBody
 
 
-class GetWithParamsApiClient(quickapi.BaseClient):
-    url: str = "https://catfact.ninja/facts"
+# TODO: Build real mock API to easily test various scenarios?
+class TestGetApi:
+    def test_api_call(self, httpx_mock: HTTPXMock):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        httpx_mock.add_response(json=mock_json)
+
+        client = GetApi()
+        response = client.execute()
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+        assert response.body.data[0] == Fact(fact="Some fact", length=9)
+
+
+class GetWithParamsApi(quickapi.BaseClient[ResponseBody]):
+    url = "https://example.com/facts"
     request_params = RequestParams
     response_body = ResponseBody
 
 
-class PostApiClient(quickapi.BaseClient):
-    url: str = "https://catfact.ninja/facts"
+class TestGetWithParamsApi:
+    def test_api_call_with_default_request_params(self, httpx_mock: HTTPXMock):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        httpx_mock.add_response(
+            url=f"{GetWithParamsApi.url}?max_length={RequestParams().max_length}&limit={RequestParams().limit}",
+            json=mock_json,
+        )
+
+        client = GetWithParamsApi()
+        response = client.execute()
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+
+    def test_api_call_with_custom_request_params(self, httpx_mock: HTTPXMock):
+        mock_json = {"current_page": 1, "data": [{"fact": "fact", "length": 4}]}
+        request_params = RequestParams(max_length=5, limit=10)
+        httpx_mock.add_response(
+            url=f"{GetWithParamsApi.url}?max_length={request_params.max_length}&limit={request_params.limit}",
+            json=mock_json,
+        )
+
+        client = GetWithParamsApi()
+        response = client.execute(request_params=request_params)
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+
+
+class PostApi(quickapi.BaseClient[ResponseBody]):
+    url = "https://example.com/facts"
     method = quickapi.BaseClientMethod.POST
     request_params = RequestParams
     request_body = RequestBody
     response_body = ResponseBody
 
 
-# TODO: Build real mock API to easily test various scenarios?
-class TestCatFactsApiClient:
-    def test_get_api_call_with_default_request_params(self, httpx_mock: HTTPXMock):
+class TestPostApi:
+    def test_api_call_with_empty_request_body(self, httpx_mock: HTTPXMock):
         mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
-        httpx_mock.add_response(json=mock_json)
-
-        client = GetApiClient()
-        response = client.execute()
-
-        assert response.body == cattrs.structure(mock_json, ResponseBody)
-        assert response.body.data[0] == Fact(fact="Some fact", length=9)
-
-    def test_get_api_call_with_custom_request_params(self, httpx_mock: HTTPXMock):
-        mock_json = {"current_page": 1, "data": [{"fact": "fact", "length": 4}]}
-        request_params = RequestParams(max_length=5, limit=10)
+        request_body = RequestBody()
         httpx_mock.add_response(
-            url=f"{GetApiClient.url}?max_length={request_params.max_length}&limit={request_params.limit}",
-            json=mock_json,
+            method="POST", match_json=request_body.to_dict(), json=mock_json
         )
-
-        client = GetWithParamsApiClient()
-        response = client.execute(request_params=request_params)
-
+        client = PostApi()
+        response = client.execute(request_body=request_body)
         assert response.body == cattrs.structure(mock_json, ResponseBody)
-        assert response.body.data[0] == Fact(fact="fact", length=4)
 
-    def test_post_api_call_with_custom_request_body(self, httpx_mock: HTTPXMock):
-        mock_json1 = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
-        request_body1 = RequestBody()
-        httpx_mock.add_response(
-            method="POST", match_json=request_body1.to_dict(), json=mock_json1
-        )
-
-        client = PostApiClient()
-        response = client.execute(request_body=request_body1)
-        assert response.body == cattrs.structure(mock_json1, ResponseBody)
-        assert response.body.data[0] == Fact(fact="Some fact", length=9)
-
-        mock_json2 = {
+    def test_api_call_with_request_body(self, httpx_mock: HTTPXMock):
+        mock_json = {
             "current_page": 1,
             "data": [{"fact": "Some other fact", "length": 16}],
         }
-        request_body2 = RequestBody(some_data="Test body")
+        request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
-            method="POST", match_json=request_body2.to_dict(), json=mock_json2
+            method="POST", match_json=request_body.to_dict(), json=mock_json
         )
-
-        client = PostApiClient()
-        response = client.execute(request_body=request_body2)
-        assert response.body == cattrs.structure(mock_json2, ResponseBody)
-        assert response.body.data[0] == Fact(fact="Some other fact", length=16)
+        client = PostApi()
+        response = client.execute(request_body=request_body)
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
