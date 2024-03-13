@@ -1,8 +1,12 @@
 from enum import Enum
+from typing import Generic, TypeVar, get_args
 
 import cattrs
 import httpx
 from attrs import asdict, define
+
+
+ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
 
 
 @define
@@ -18,9 +22,9 @@ class BaseRequestBody:
 
 
 # TODO: Needs to support differebt response body types (json, text, xml, etc)
-class BaseResponseBody:
+class BaseResponseBody(Generic[ResponseBodyT]):
     @classmethod
-    def from_dict(cls: type["BaseResponseBody"], value: dict) -> "BaseResponseBody":
+    def from_dict(cls: type[ResponseBodyT], value: dict) -> ResponseBodyT:
         return cattrs.structure(value, cls)
 
 
@@ -36,20 +40,19 @@ class BaseClientMethod(Enum):
 
 
 @define
-class BaseResponse:
+class BaseResponse(Generic[ResponseBodyT]):
     response: httpx.Response
-    # TODO: Can we set the return type so that on usage, automatically recognizes the configured response body type?
-    body: "BaseResponseBody"
+    body: ResponseBodyT
 
 
 # TODO: Should this be BaseApi?
-class BaseClient:
+class BaseClient(Generic[ResponseBodyT]):
     url: str
     method: BaseClientMethod = BaseClientMethod.GET
     request_params: type[BaseRequestParams]
     request_body: type[BaseRequestBody]
-    response_body: type[BaseResponseBody]
-    _response: BaseResponse | None = None
+    response_body: type[ResponseBodyT]
+    _response: BaseResponse[ResponseBodyT] | None = None
     _client: httpx.Client
 
     def __init__(self, client: httpx.Client | None = None) -> None:
@@ -60,7 +63,6 @@ class BaseClient:
         self,
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
-    ) -> BaseResponse:
         request_params = (
             request_params or self.request_params()
             if getattr(self, "request_params", None)
@@ -71,6 +73,7 @@ class BaseClient:
             if getattr(self, "request_body", None)
             else BaseRequestBody()
         )
+    ) -> BaseResponse[ResponseBodyT]:
 
         if self.method == BaseClientMethod.GET:
             response = self._client.get(url=self.url, params=request_params.to_dict())
