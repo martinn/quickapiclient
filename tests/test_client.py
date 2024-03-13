@@ -1,4 +1,5 @@
 import cattrs
+import pytest
 from attrs import define, field
 from pytest_httpx import HTTPXMock
 
@@ -29,8 +30,25 @@ class ResponseBody(quickapi.BaseResponseBody):
 
 
 # TODO: Build real mock API to easily test various scenarios?
+class TestErrorApi:
+    def test_should_raise_error_if_no_url_specified(self):
+        with pytest.raises(quickapi.ClientSetupError):
 
+            class _(quickapi.BaseClient[ResponseBody]):
+                response_body = ResponseBody
 
+    def test_should_raise_error_if_no_response_body_specified(self):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseClient[ResponseBody]):
+                url = "https://example.com/facts"
+
+    def test_should_raise_warning_if_no_generic_type_specified(self):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseClient):
+                url = "https://example.com/facts"
+                response_body = ResponseBody
 
 
 class GetApi(quickapi.BaseClient[ResponseBody]):
