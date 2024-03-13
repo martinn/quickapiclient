@@ -34,24 +34,24 @@ class TestErrorApi:
     def test_should_raise_error_if_no_url_specified(self):
         with pytest.raises(quickapi.ClientSetupError):
 
-            class _(quickapi.BaseClient[ResponseBody]):
+            class _(quickapi.BaseApi[ResponseBody]):
                 response_body = ResponseBody
 
     def test_should_raise_error_if_no_response_body_specified(self):
         with pytest.raises(quickapi.ClientSetupError):
 
-            class _(quickapi.BaseClient[ResponseBody]):
+            class _(quickapi.BaseApi[ResponseBody]):
                 url = "https://example.com/facts"
 
     def test_should_raise_warning_if_no_generic_type_specified(self):
         with pytest.raises(quickapi.ClientSetupError):
 
-            class _(quickapi.BaseClient):
+            class _(quickapi.BaseApi):
                 url = "https://example.com/facts"
                 response_body = ResponseBody
 
 
-class GetApi(quickapi.BaseClient[ResponseBody]):
+class GetApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
     response_body = ResponseBody
 
@@ -68,7 +68,7 @@ class TestGetApi:
         assert response.body.data[0] == Fact(fact="Some fact", length=9)
 
 
-class GetWithParamsApi(quickapi.BaseClient[ResponseBody]):
+class GetWithParamsApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
     request_params = RequestParams
     response_body = ResponseBody
@@ -99,9 +99,9 @@ class TestGetWithParamsApi:
         assert response.body == cattrs.structure(mock_json, ResponseBody)
 
 
-class PostApi(quickapi.BaseClient[ResponseBody]):
+class PostApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
-    method = quickapi.BaseClientMethod.POST
+    method = quickapi.BaseApiMethod.POST
     request_params = RequestParams
     request_body = RequestBody
     response_body = ResponseBody
