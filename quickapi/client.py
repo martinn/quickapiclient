@@ -5,8 +5,19 @@ import cattrs
 import httpx
 from attrs import asdict, define
 
+from .exceptions import QuickApiException
 
 ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
+
+
+class ClientSetupError(QuickApiException):
+    """An error setting up the BaseClient subclass."""
+
+    def __init__(self, missing_attribute: str):
+        message = (
+            f"Subclass setup error. Missing required attribute `{missing_attribute}`"
+        )
+        super().__init__(message)
 
 
 @define
@@ -49,11 +60,41 @@ class BaseResponse(Generic[ResponseBodyT]):
 class BaseClient(Generic[ResponseBodyT]):
     url: str
     method: BaseClientMethod = BaseClientMethod.GET
-    request_params: type[BaseRequestParams]
-    request_body: type[BaseRequestBody]
+    request_params: type[BaseRequestParams] | None = None
+    request_body: type[BaseRequestBody] | None = None
     response_body: type[ResponseBodyT]
+
+    _request_params_cls: type[BaseRequestParams] = BaseRequestParams
+    _request_body_cls: type[BaseRequestBody] = BaseRequestBody
+    _response_body_cls: type[ResponseBodyT]
     _response: BaseResponse[ResponseBodyT] | None = None
     _client: httpx.Client
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+
+        if getattr(cls, "url", None) is None:
+            raise ClientSetupError(missing_attribute="url")
+
+        if getattr(cls, "response_body", None) is None:
+            raise ClientSetupError(missing_attribute="response_body")
+
+        if getattr(cls, "__orig_bases__", None) is not None:
+            response_body_generic_type = get_args(cls.__orig_bases__[0])[0]  # type: ignore [attr-defined]
+            if (
+                isinstance(response_body_generic_type, TypeVar)
+                and response_body_generic_type.__name__ == "ResponseBodyT"
+            ):
+                raise ClientSetupError(missing_attribute="ResponseBodyT")
+
+        if cls.request_params is not None:
+            cls._request_params_cls = cls.request_params
+
+        if cls.request_body is not None:
+            cls._request_body_cls = cls.request_body
+
+        cls._response_body_cls = cls.response_body  # pyright: ignore [reportGeneralTypeIssues]
 
     def __init__(self, client: httpx.Client | None = None) -> None:
         # TODO: Add proper support for other HTTP libraries
@@ -63,17 +104,9 @@ class BaseClient(Generic[ResponseBodyT]):
         self,
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
-        request_params = (
-            request_params or self.request_params()
-            if getattr(self, "request_params", None)
-            else BaseRequestParams()
-        )
-        request_body = (
-            request_body or self.request_body()
-            if getattr(self, "request_body", None)
-            else BaseRequestBody()
-        )
     ) -> BaseResponse[ResponseBodyT]:
+        request_params = request_params or self._request_params_cls()
+        request_body = request_body or self._request_body_cls()
 
         if self.method == BaseClientMethod.GET:
             response = self._client.get(url=self.url, params=request_params.to_dict())
@@ -86,7 +119,7 @@ class BaseClient(Generic[ResponseBodyT]):
         else:
             raise NotImplementedError(f"Method {self.method} not implemented")
 
-        body = self.response_body.from_dict(response.json())
+        body = self._response_body_cls.from_dict(response.json())
         self._response = BaseResponse(response=response, body=body)
 
         return self._response
