@@ -1,6 +1,6 @@
 from .client import (  # noqa: F401
-    BaseClient,
-    BaseClientMethod,
+    BaseApi,
+    BaseApiMethod,
     BaseRequestBody,
     BaseRequestParams,
     BaseResponseBody,
