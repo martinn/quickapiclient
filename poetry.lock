@@ -462,6 +462,23 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
 
 [[package]]
+name = "httpx-auth"
+version = "0.22.0"
+description = "Authentication for HTTPX"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "httpx_auth-0.22.0-py3-none-any.whl", hash = "sha256:c60198e8160728f00e754b5181f4b9d1e4530260b94bbd09fd8abfe826b5be50"},
+    {file = "httpx_auth-0.22.0.tar.gz", hash = "sha256:5dc2d18cd3a0788015fd22714048e59f5eca6aa3051bfbd8d9dd0d2e6254c095"},
+]
+
+[package.dependencies]
+httpx = "==0.27.*"
+
+[package.extras]
+testing = ["pyjwt (==2.*)", "pytest-asyncio (==0.23.*)", "pytest-cov (==4.*)", "pytest-httpx (==0.30.*)", "time-machine (==2.*)"]
+
+[[package]]
 name = "identify"
 version = "2.5.35"
 description = "File identification library for Python"
@@ -1416,4 +1433,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "60b716059dfdfe4323254ff4d0b0b643032b9235233003bee3728c1c9e240930"
+content-hash = "776d8f2109bbfb66e1a9c87fca01a3b8583b9930b3c5eabf8abbc6bef016c20a"
