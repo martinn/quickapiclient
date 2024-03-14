@@ -21,7 +21,7 @@ class ClientSetupError(QuickApiException):
 
 
 class HTTPError(QuickApiException):
-    """The response received a non `200` response."""
+    """The response received a non `200` response status code."""
 
     def __init__(self, status_code: int):
         message = f"HTTP request received a non `HTTP 200 (OK)` response. The response status code was `{status_code}`."
@@ -132,7 +132,7 @@ class BaseApi(Generic[ResponseBodyT]):
                 json=request_body.to_dict(),
             )
         else:
-            raise NotImplementedError(f"Method {self.method} not implemented")
+            raise NotImplementedError(f"Method {self.method} not implemented yet.")
 
         if response.status_code != 200:
             raise HTTPError(response.status_code)

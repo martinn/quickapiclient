@@ -1,60 +1,38 @@
 from base64 import b64encode
 
+import attrs
 import cattrs
 import httpx
 import httpx_auth
 import pytest
-from attrs import define, field
 from pytest_httpx import HTTPXMock
 
 import quickapi
 
 
-@define
+@attrs.define
 class Fact:
     fact: str
     length: int
 
 
-@define
+@attrs.define
 class RequestParams(quickapi.BaseRequestParams):
     max_length: int = 100
     limit: int = 10
 
 
-@define
+@attrs.define
 class RequestBody(quickapi.BaseRequestBody):
     some_data: str | None = None
 
 
-@define
 class ResponseBody(quickapi.BaseResponseBody):
     current_page: int
-    data: list[Fact] = field(factory=list)
+    data: list[Fact] = attrs.field(factory=list)
 
 
 # TODO: Build real mock API to easily test various scenarios?
-class TestErrorApi:
-    def test_should_raise_error_if_no_url_specified(self):
-        with pytest.raises(quickapi.ClientSetupError):
-
-            class _(quickapi.BaseApi[ResponseBody]):
-                response_body = ResponseBody
-
-    def test_should_raise_error_if_no_response_body_specified(self):
-        with pytest.raises(quickapi.ClientSetupError):
-
-            class _(quickapi.BaseApi[ResponseBody]):
-                url = "https://example.com/facts"
-
-    def test_should_raise_warning_if_no_generic_type_specified(self):
-        with pytest.raises(quickapi.ClientSetupError):
-
-            class _(quickapi.BaseApi):
-                url = "https://example.com/facts"
-                response_body = ResponseBody
-
-
 class GetApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
     response_body = ResponseBody
@@ -136,7 +114,7 @@ class TestPostApi:
         assert response.body == cattrs.structure(mock_json, ResponseBody)
 
 
-@define
+@attrs.define
 class AuthResponseBody(quickapi.BaseResponseBody):
     authenticated: bool
     user: str
@@ -202,3 +180,28 @@ class TestAuthWithBearerApi:
         client = AuthWithHeaderKeyApi()
         with pytest.raises(quickapi.HTTPError):
             client.execute()
+
+
+class TestClientSetupError:
+    def test_should_raise_error_if_no_url_specified(self, httpx_mock: HTTPXMock):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseApi[ResponseBody]):
+                response_body = ResponseBody
+
+    def test_should_raise_error_if_no_response_body_specified(
+        self, httpx_mock: HTTPXMock
+    ):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseApi[ResponseBody]):
+                url = "https://example.com/facts"
+
+    def test_should_raise_warning_if_no_generic_type_specified(
+        self, httpx_mock: HTTPXMock
+    ):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseApi):
+                url = "https://example.com/facts"
+                response_body = ResponseBody
