@@ -28,6 +28,14 @@ class HTTPError(QuickApiException):
         super().__init__(message)
 
 
+class ResponseSerializationError(QuickApiException):
+    """The response received was not serializable to the configured `response_body` type."""
+
+    def __init__(self, expected_type: str):
+        message = f"HTTP response body did not match expected type `{expected_type}`."
+        super().__init__(message)
+
+
 @define
 class BaseRequestParams:
     def to_dict(self: "BaseRequestParams") -> dict:
@@ -44,7 +52,10 @@ class BaseRequestBody:
 class BaseResponseBody(Generic[ResponseBodyT]):
     @classmethod
     def from_dict(cls: type[ResponseBodyT], value: dict) -> ResponseBodyT:
-        return cattrs.structure(value, cls)
+        try:
+            return cattrs.structure(value, cls)
+        except cattrs.ClassValidationError as e:
+            raise ResponseSerializationError(expected_type=cls.__name__) from e
 
 
 @define
