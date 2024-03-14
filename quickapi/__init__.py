@@ -5,5 +5,6 @@ from .client import (  # noqa: F401
     BaseRequestParams,
     BaseResponseBody,
     ClientSetupError,
+    HTTPError,
 )
 from .exceptions import QuickApiException  # noqa: F401

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Generic, TypeVar, get_args
+from typing import Any, Generic, TypeVar, get_args
 
 import cattrs
 import httpx
@@ -15,8 +15,16 @@ class ClientSetupError(QuickApiException):
 
     def __init__(self, missing_attribute: str):
         message = (
-            f"Subclass setup error. Missing required attribute `{missing_attribute}`"
+            f"Subclass setup error. Missing required attribute `{missing_attribute}`."
         )
+        super().__init__(message)
+
+
+class HTTPError(QuickApiException):
+    """The response received a non `200` response."""
+
+    def __init__(self, status_code: int):
+        message = f"HTTP request received a non `HTTP 200 (OK)` response. The response status code was `{status_code}`."
         super().__init__(message)
 
 
@@ -59,6 +67,7 @@ class BaseApiMethod(Enum):
 class BaseApi(Generic[ResponseBodyT]):
     url: str
     method: BaseApiMethod = BaseApiMethod.GET
+    auth: httpx.Auth | Any = httpx.USE_CLIENT_DEFAULT
     request_params: type[BaseRequestParams] | None = None
     request_body: type[BaseRequestBody] | None = None
     response_body: type[ResponseBodyT]
@@ -103,20 +112,30 @@ class BaseApi(Generic[ResponseBodyT]):
         self,
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
+        auth: httpx.Auth | Any = httpx.USE_CLIENT_DEFAULT,
     ) -> BaseResponse[ResponseBodyT]:
         request_params = request_params or self._request_params_cls()
         request_body = request_body or self._request_body_cls()
+        auth = auth if auth != httpx.USE_CLIENT_DEFAULT else self.auth
 
         if self.method == BaseApiMethod.GET:
-            response = self._client.get(url=self.url, params=request_params.to_dict())
+            response = self._client.get(
+                url=self.url,
+                auth=auth,
+                params=request_params.to_dict(),
+            )
         elif self.method == BaseApiMethod.POST:
             response = self._client.post(
                 url=self.url,
+                auth=auth,
                 params=request_params.to_dict(),
                 json=request_body.to_dict(),
             )
         else:
             raise NotImplementedError(f"Method {self.method} not implemented")
+
+        if response.status_code != 200:
+            raise HTTPError(response.status_code)
 
         body = self._response_body_cls.from_dict(response.json())
         self._response = BaseResponse(client_response=response, body=body)
