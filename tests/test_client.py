@@ -27,8 +27,9 @@ class RequestBody(quickapi.BaseRequestBody):
     some_data: str | None = None
 
 
+@attrs.define
 class ResponseBody(quickapi.BaseResponseBody):
-    current_page: int
+    current_page: int = attrs.field(validator=attrs.validators.lt(100))
     data: list[Fact] = attrs.field(factory=list)
 
 
@@ -205,3 +206,46 @@ class TestClientSetupError:
             class _(quickapi.BaseApi):
                 url = "https://example.com/facts"
                 response_body = ResponseBody
+
+
+class TestSerializationError:
+    def test_error_if_response_body_attribute_incorrect_type(
+        self, httpx_mock: HTTPXMock
+    ):
+        mock_json_incorrect_type = {"current_page": 0, "data": "incorrect_type"}
+        httpx_mock.add_response(
+            json=mock_json_incorrect_type,
+        )
+
+        with pytest.raises(quickapi.ResponseSerializationError):
+            client = GetApi()
+            client.execute()
+
+    def test_error_if_response_body_required_attribute_missing(
+        self, httpx_mock: HTTPXMock
+    ):
+        mock_json_attribute_missing = {"data": []}
+        httpx_mock.add_response(
+            json=mock_json_attribute_missing,
+        )
+
+        with pytest.raises(quickapi.ResponseSerializationError):
+            client = GetApi()
+            client.execute()
+
+    def test_response_body_validator(self, httpx_mock: HTTPXMock):
+        mock_json_validator_fail = {"current_page": 101}
+        httpx_mock.add_response(
+            json=mock_json_validator_fail,
+        )
+
+        with pytest.raises(quickapi.ResponseSerializationError):
+            client = GetApi()
+            client.execute()
+
+        mock_json_validator_pass = {"current_page": 99}
+        httpx_mock.add_response(
+            json=mock_json_validator_pass,
+        )
+
+        client.execute()
