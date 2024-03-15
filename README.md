@@ -230,3 +230,10 @@ client = MyApi()
 request_body = RequestBody(required_input="dummy")
 response = client.execute(request_body=request_body)
 ```
+
+## Contributing
+
+Contributions are welcomed, and greatly appreciated!
+
+If you want to contribute, check out the
+[contributing guide](./CONTRIBUTING.md) to get started.
