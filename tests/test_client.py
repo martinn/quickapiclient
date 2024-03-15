@@ -155,7 +155,6 @@ class TestAuthWithBasicApi:
 
 class AuthWithHeaderKeyApi(quickapi.BaseApi[AuthResponseBody]):
     url = "https://httpbin.org/bearer"
-    auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="my_api_key")
     response_body = AuthResponseBody
 
 
@@ -169,7 +168,23 @@ class TestAuthWithBearerApi:
         )
 
         client = AuthWithHeaderKeyApi()
+        client.auth = httpx_auth.HeaderApiKey(
+            header_name="X-Api-Key", api_key="my_api_key"
+        )
         response = client.execute()
+        assert response.body == cattrs.structure(mock_json, AuthResponseBody)
+
+    def test_api_call_with_correct_credentials_on_execute(self, httpx_mock: HTTPXMock):
+        mock_json = {"authenticated": 1, "user": "quickapi"}
+        httpx_mock.add_response(
+            url=AuthWithHeaderKeyApi.url,
+            match_headers={"X-Api-Key": "my_api_key"},
+            json=mock_json,
+        )
+
+        auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="my_api_key")
+        client = AuthWithHeaderKeyApi()
+        response = client.execute(auth=auth)
         assert response.body == cattrs.structure(mock_json, AuthResponseBody)
 
     def test_api_call_with_incorrect_credentials(self, httpx_mock: HTTPXMock):
@@ -178,9 +193,10 @@ class TestAuthWithBearerApi:
             status_code=401,
         )
 
+        auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="my_api_key")
         client = AuthWithHeaderKeyApi()
         with pytest.raises(quickapi.HTTPError):
-            client.execute()
+            client.execute(auth=auth)
 
 
 class TestClientSetupError:
