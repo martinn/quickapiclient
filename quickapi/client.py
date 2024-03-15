@@ -92,7 +92,18 @@ class BaseApi(Generic[ResponseBodyT]):
     @classmethod
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
+        cls._validate_subclass()
 
+        if cls.request_params is not None:
+            cls._request_params_cls = cls.request_params
+
+        if cls.request_body is not None:
+            cls._request_body_cls = cls.request_body
+
+        cls._response_body_cls = cls.response_body  # pyright: ignore [reportGeneralTypeIssues]
+
+    @classmethod
+    def _validate_subclass(cls) -> None:
         if getattr(cls, "url", None) is None:
             raise ClientSetupError(missing_attribute="url")
 
@@ -106,14 +117,6 @@ class BaseApi(Generic[ResponseBodyT]):
                 and response_body_generic_type.__name__ == "ResponseBodyT"
             ):
                 raise ClientSetupError(missing_attribute="ResponseBodyT")
-
-        if cls.request_params is not None:
-            cls._request_params_cls = cls.request_params
-
-        if cls.request_body is not None:
-            cls._request_body_cls = cls.request_body
-
-        cls._response_body_cls = cls.response_body  # pyright: ignore [reportGeneralTypeIssues]
 
     def __init__(self, client: httpx.Client | None = None) -> None:
         # TODO: Add proper support for other HTTP libraries
@@ -130,13 +133,13 @@ class BaseApi(Generic[ResponseBodyT]):
         auth = auth if auth != httpx.USE_CLIENT_DEFAULT else self.auth
 
         if self.method == BaseApiMethod.GET:
-            response = self._client.get(
+            client_response = self._client.get(
                 url=self.url,
                 auth=auth,
                 params=request_params.to_dict(),
             )
         elif self.method == BaseApiMethod.POST:
-            response = self._client.post(
+            client_response = self._client.post(
                 url=self.url,
                 auth=auth,
                 params=request_params.to_dict(),
@@ -145,10 +148,11 @@ class BaseApi(Generic[ResponseBodyT]):
         else:
             raise NotImplementedError(f"Method {self.method} not implemented yet.")
 
-        if response.status_code != 200:
-            raise HTTPError(response.status_code)
+        # TODO: Add support for handling different response status codes
+        if client_response.status_code != 200:
+            raise HTTPError(client_response.status_code)
 
-        body = self._response_body_cls.from_dict(response.json())
-        self._response = BaseResponse(client_response=response, body=body)
+        body = self._response_body_cls.from_dict(client_response.json())
+        self._response = BaseResponse(client_response=client_response, body=body)
 
         return self._response
