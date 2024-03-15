@@ -59,7 +59,7 @@ but could expand to support others in the future if there's interest.
   - [x] Fully typed response body
   - [x] Built in serialization/deserialization with `attrs`
   - [x] Basic error and serialization handling
-  - [ ] Inline class definitions
+  - [ ] Nested/inner class definitions
   - [ ] Improved HTTP status codes error handling
   - [ ] Sessions support and/or allow building several related APIs through a single interface
   - [ ] Generate API boilerplate from OpenAPI specs?
@@ -104,7 +104,7 @@ poetry add quickapiclient
 
 ### A GET request with query params
 
-An example of a GET request with some optional and required query parameters.
+An example of a GET request with query parameters with overridable default values.
 
 ```python
 import attrs
@@ -220,7 +220,8 @@ class AuthResponseBody(quickapi.BaseResponseBody):
 class MyApi(quickapi.BaseApi[AuthResponseBody]):
     url = "https://httpbin.org/bearer"
     method = quickapi.BaseApiMethod.POST
-    auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="secret_api_key")
+    # You could specify it here if you wanted
+    # auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="secret_api_key")
     response_body = AuthResponseBody
 ```
 
@@ -229,7 +230,8 @@ And to use it:
 ```python
 client = MyApi()
 request_body = RequestBody(required_input="dummy")
-response = client.execute(request_body=request_body)
+auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="secret_api_key")
+response = client.execute(request_body=request_body, auth=auth)
 ```
 
 ### A POST request with validation and conversion
