@@ -60,6 +60,7 @@ but could expand to support others in the future if there's interest.
   - [x] Built in serialization/deserialization with `attrs`
   - [x] Basic error and serialization handling
   - [ ] Inline class definitions
+  - [ ] Improved HTTP status codes error handling
   - [ ] Sessions support and/or allow building several related APIs through a single interface
   - [ ] Generate API boilerplate from OpenAPI specs?
 - HTTP client libraries
@@ -230,6 +231,53 @@ client = MyApi()
 request_body = RequestBody(required_input="dummy")
 response = client.execute(request_body=request_body)
 ```
+
+### A POST request with validation and conversion
+
+An example of a POST request with custom validators and converters (from `attrs`).
+
+```python
+import attrs
+import quickapi
+import enum
+
+
+class State(enum.Enum):
+    ON = "on"
+    OFF = "off"
+
+
+@attrs.define
+class RequestBody(quickapi.BaseRequestBody):
+    state: State = attrs.field(validator=attrs.validators.in_(State))
+    email: str = attrs.field(
+        validator=attrs.validators.matches_re(
+            r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+        )
+    )
+
+
+@attrs.define
+class ResponseBody(quickapi.BaseResponseBody):
+    success: bool = attrs.field(converter=attrs.converters.to_bool)
+
+
+class MyApi(quickapi.BaseApi[ResponseBody]):
+    url = "https://example.com/"
+    method = quickapi.BaseApiMethod.POST
+    request_body = RequestBody
+    response_body = ResponseBody
+```
+
+And to use it:
+
+```python
+client = MyApi()
+request_body = RequestBody(email="invalid_email", state="on") # Will raise an error
+response = client.execute(request_body=request_body)
+```
+
+Check out [attrs](https://github.com/python-attrs/attrs) for full configuration.
 
 ## Contributing
 
