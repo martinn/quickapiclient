@@ -1,10 +1,10 @@
-site_name: quickapi
-repo_url: https://github.com/martinn/quickapi
-site_url: https://martinn.github.io/quickapi
+site_name: quickapiclient
+repo_url: https://github.com/martinn/quickapiclient
+site_url: https://martinn.github.io/quickapiclient
 site_description: A library for creating fully typed declarative API clients quickly and easily.
 site_author: Martin N.
 edit_uri: edit/main/docs/
-repo_name: martinn/quickapi
+repo_name: martinn/quickapiclient
 
 nav:
   - Home: index.md
@@ -42,7 +42,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/martinn/quickapi
+      link: https://github.com/martinn/quickapiclient
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/quickapiclient
 

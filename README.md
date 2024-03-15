@@ -1,13 +1,13 @@
-# QuickApi
+# Quick Api Client
 
-[![Release](https://img.shields.io/github/v/release/martinn/quickapi)](https://img.shields.io/github/v/release/martinn/quickapi)
-[![Build status](https://img.shields.io/github/actions/workflow/status/martinn/quickapi/main.yml?branch=main)](https://github.com/martinn/quickapi/actions/workflows/main.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/martinn/quickapi/branch/main/graph/badge.svg)](https://codecov.io/gh/martinn/quickapi)
+[![Release](https://img.shields.io/github/v/release/martinn/quickapiclient)](https://img.shields.io/github/v/release/martinn/quickapiclient)
+[![Build status](https://img.shields.io/github/actions/workflow/status/martinn/quickapiclient/main.yml?branch=main)](https://github.com/martinn/quickapiclient/actions/workflows/main.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/martinn/quickapiclient/branch/main/graph/badge.svg)](https://codecov.io/gh/martinn/quickapiclient)
 
 A library for creating fully typed declarative API clients quickly and easily.
 
-- **Github repository**: <https://github.com/martinn/quickapi/>
-- **Documentation** <https://martinn.github.io/quickapi/>
+- **Github repository**: <https://github.com/martinn/quickapiclient/>
+- **Documentation** <https://martinn.github.io/quickapiclient/>
 
 ## A quick example
 
