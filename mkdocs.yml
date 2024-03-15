@@ -1,7 +1,7 @@
 site_name: quickapi
 repo_url: https://github.com/martinn/quickapi
 site_url: https://martinn.github.io/quickapi
-site_description: A library for creating fully typed API clients quickly and easily.
+site_description: A library for creating fully typed declarative API clients quickly and easily.
 site_author: Martin N.
 edit_uri: edit/main/docs/
 repo_name: martinn/quickapi
