@@ -1,4 +1,4 @@
-name: release-main
+name: Build and publish
 
 on:
   release:
