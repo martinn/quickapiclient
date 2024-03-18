@@ -27,7 +27,8 @@ httpx-auth = "^0.22.0"
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
 mkdocs-material = "^9.2.7"
-mkdocstrings = { extras = ["python"], version = "^0.23.0" }
+mkdocstrings = { extras = ["python"], version = "^0.24.1" }
+markdown-checklist = "^0.4.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

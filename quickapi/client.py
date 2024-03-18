@@ -39,6 +39,8 @@ class BaseResponse(Generic[ResponseBodyT]):
 
 
 class BaseApiMethod(str, Enum):
+    """Supported HTTP methods."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -54,6 +56,8 @@ class BaseApiMethod(str, Enum):
 
 
 class BaseApi(Generic[ResponseBodyT]):
+    """Base class for all API clients."""
+
     url: str
     method: BaseApiMethod = BaseApiMethod.GET
     auth: httpx.Auth | Any = httpx.USE_CLIENT_DEFAULT
@@ -112,6 +116,8 @@ class BaseApi(Generic[ResponseBodyT]):
         request_body: BaseRequestBody | None = None,
         auth: httpx.Auth | Any = httpx.USE_CLIENT_DEFAULT,
     ) -> BaseResponse[ResponseBodyT]:
+        """Execute the API request and return the response."""
+
         request_params = request_params or self._request_params_cls()
         request_body = request_body or self._request_body_cls()
         auth = auth if auth != httpx.USE_CLIENT_DEFAULT else self.auth
