@@ -13,10 +13,8 @@ ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
 class ClientSetupError(QuickApiException):
     """An error setting up the BaseClient subclass."""
 
-    def __init__(self, missing_attribute: str):
-        message = (
-            f"Subclass setup error. Missing required attribute `{missing_attribute}`."
-        )
+    def __init__(self, attribute: str):
+        message = f"Subclass setup error. Missing or invalid required attribute `{attribute}`."
         super().__init__(message)
 
 
@@ -105,10 +103,10 @@ class BaseApi(Generic[ResponseBodyT]):
     @classmethod
     def _validate_subclass(cls) -> None:
         if getattr(cls, "url", None) is None:
-            raise ClientSetupError(missing_attribute="url")
+            raise ClientSetupError(attribute="url")
 
         if getattr(cls, "response_body", None) is None:
-            raise ClientSetupError(missing_attribute="response_body")
+            raise ClientSetupError(attribute="response_body")
 
         if getattr(cls, "__orig_bases__", None) is not None:
             response_body_generic_type = get_args(cls.__orig_bases__[0])[0]  # type: ignore [attr-defined]
@@ -116,7 +114,7 @@ class BaseApi(Generic[ResponseBodyT]):
                 isinstance(response_body_generic_type, TypeVar)
                 and response_body_generic_type.__name__ == "ResponseBodyT"
             ):
-                raise ClientSetupError(missing_attribute="ResponseBodyT")
+                raise ClientSetupError(attribute="ResponseBodyT")
 
     def __init__(self, client: httpx.Client | None = None) -> None:
         # TODO: Add proper support for other HTTP libraries
