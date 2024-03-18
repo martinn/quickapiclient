@@ -62,7 +62,7 @@ class BaseResponse(Generic[ResponseBodyT]):
     body: ResponseBodyT
 
 
-class BaseApiMethod(Enum):
+class BaseApiMethod(str, Enum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -71,6 +71,10 @@ class BaseApiMethod(Enum):
     OPTIONS = "OPTIONS"
     HEAD = "HEAD"
     TRACE = "TRACE"
+
+    @staticmethod
+    def values() -> dict[str, Enum]:
+        return BaseApiMethod._value2member_map_
 
 
 class BaseApi(Generic[ResponseBodyT]):
@@ -108,6 +112,12 @@ class BaseApi(Generic[ResponseBodyT]):
         if getattr(cls, "response_body", None) is None:
             raise ClientSetupError(attribute="response_body")
 
+        if (
+            getattr(cls, "method", None) is not None
+            and cls.method not in BaseApiMethod.values()
+        ):
+            raise ClientSetupError(attribute="method")
+
         if getattr(cls, "__orig_bases__", None) is not None:
             response_body_generic_type = get_args(cls.__orig_bases__[0])[0]  # type: ignore [attr-defined]
             if (
@@ -130,21 +140,54 @@ class BaseApi(Generic[ResponseBodyT]):
         request_body = request_body or self._request_body_cls()
         auth = auth if auth != httpx.USE_CLIENT_DEFAULT else self.auth
 
-        if self.method == BaseApiMethod.GET:
-            client_response = self._client.get(
-                url=self.url,
-                auth=auth,
-                params=request_params.to_dict(),
-            )
-        elif self.method == BaseApiMethod.POST:
-            client_response = self._client.post(
-                url=self.url,
-                auth=auth,
-                params=request_params.to_dict(),
-                json=request_body.to_dict(),
-            )
-        else:
-            raise NotImplementedError(f"Method {self.method} not implemented yet.")
+        match self.method:
+            case BaseApiMethod.GET:
+                client_response = self._client.get(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                )
+            case BaseApiMethod.OPTIONS:
+                client_response = self._client.options(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                )
+            case BaseApiMethod.HEAD:
+                client_response = self._client.head(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                )
+            case BaseApiMethod.POST:
+                client_response = self._client.post(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                    json=request_body.to_dict(),
+                )
+            case BaseApiMethod.PUT:
+                client_response = self._client.put(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                    json=request_body.to_dict(),
+                )
+            case BaseApiMethod.PATCH:
+                client_response = self._client.patch(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                    json=request_body.to_dict(),
+                )
+            case BaseApiMethod.DELETE:
+                client_response = self._client.delete(
+                    url=self.url,
+                    auth=auth,
+                    params=request_params.to_dict(),
+                )
+            case _:
+                raise NotImplementedError(f"Method {self.method} not implemented.")
 
         # TODO: Add support for handling different response status codes
         if client_response.status_code != 200:

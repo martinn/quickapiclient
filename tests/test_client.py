@@ -214,6 +214,14 @@ class TestClientSetupError:
             class _(quickapi.BaseApi[ResponseBody]):
                 url = "https://example.com/facts"
 
+    def test_should_raise_error_if_no_method_specified(self, httpx_mock: HTTPXMock):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseApi[ResponseBody]):
+                url = "https://example.com/facts"
+                method = "INVALID"  # pyright: ignore [reportAssignmentType]
+                response_body = ResponseBody
+
     def test_should_raise_warning_if_no_generic_type_specified(
         self, httpx_mock: HTTPXMock
     ):
