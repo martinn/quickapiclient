@@ -1,25 +1,28 @@
 from enum import Enum
 from typing import Any, Generic, TypeVar, get_args
 
+import attrs
 import cattrs
 import httpx
-from attrs import asdict, define
 
 from .exceptions import ClientSetupError, HTTPError, ResponseSerializationError
 
-ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
 
 
-@define
+
+@attrs.define
 class BaseRequestParams:
     def to_dict(self: "BaseRequestParams") -> dict:
-        return asdict(self)
+        return attrs.asdict(self)
 
 
-@define
+@attrs.define
 class BaseRequestBody:
     def to_dict(self: "BaseRequestBody") -> dict:
-        return asdict(self)
+        return attrs.asdict(self)
+
+
+ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
 
 
 # TODO: Needs to support differebt response body types (json, text, xml, etc)
@@ -32,7 +35,7 @@ class BaseResponseBody(Generic[ResponseBodyT]):
             raise ResponseSerializationError(expected_type=cls.__name__) from e
 
 
-@define
+@attrs.define
 class BaseResponse(Generic[ResponseBodyT]):
     client_response: httpx.Response
     body: ResponseBodyT
@@ -66,8 +69,8 @@ class BaseApi(Generic[ResponseBodyT]):
     response_body: type[ResponseBodyT]
 
     _client: httpx.Client
-    _request_params_cls: type[BaseRequestParams] = BaseRequestParams
-    _request_body_cls: type[BaseRequestBody] = BaseRequestBody
+    _request_params: BaseRequestParams = BaseRequestParams()
+    _request_body: BaseRequestBody = BaseRequestBody()
     _response_body_cls: type[ResponseBodyT]
     _response: BaseResponse[ResponseBodyT] | None = None
 
@@ -77,10 +80,10 @@ class BaseApi(Generic[ResponseBodyT]):
         cls._validate_subclass()
 
         if cls.request_params is not None:
-            cls._request_params_cls = cls.request_params
+            cls._request_params = cls.request_params()
 
         if cls.request_body is not None:
-            cls._request_body_cls = cls.request_body
+            cls._request_body = cls.request_body()
 
         cls._response_body_cls = cls.response_body  # pyright: ignore [reportGeneralTypeIssues]
 
@@ -106,9 +109,13 @@ class BaseApi(Generic[ResponseBodyT]):
             ):
                 raise ClientSetupError(attribute="ResponseBodyT")
 
-    def __init__(self, client: httpx.Client | None = None) -> None:
-        # TODO: Add proper support for other HTTP libraries
-        self._client = client or httpx.Client()
+    def __init__(
+        self,
+        request_params: BaseRequestParams | None = None,
+        request_body: BaseRequestBody | None = None,
+    ) -> None:
+        self._request_params = request_params or self._request_params
+        self._request_body = request_body or self._request_body
 
     def execute(
         self,
@@ -118,55 +125,55 @@ class BaseApi(Generic[ResponseBodyT]):
     ) -> BaseResponse[ResponseBodyT]:
         """Execute the API request and return the response."""
 
-        request_params = request_params or self._request_params_cls()
-        request_body = request_body or self._request_body_cls()
         auth = auth if auth != httpx.USE_CLIENT_DEFAULT else self.auth
+        self._request_params = request_params or self._request_params
+        self._request_body = request_body or self._request_body
 
         match self.method:
             case BaseApiMethod.GET:
                 client_response = self._client.get(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
+                    params=self._request_params.to_dict(),
                 )
             case BaseApiMethod.OPTIONS:
                 client_response = self._client.options(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
+                    params=self._request_params.to_dict(),
                 )
             case BaseApiMethod.HEAD:
                 client_response = self._client.head(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
+                    params=self._request_params.to_dict(),
                 )
             case BaseApiMethod.POST:
                 client_response = self._client.post(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
-                    json=request_body.to_dict(),
+                    params=self._request_params.to_dict(),
+                    json=self._request_body.to_dict(),
                 )
             case BaseApiMethod.PUT:
                 client_response = self._client.put(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
-                    json=request_body.to_dict(),
+                    params=self._request_params.to_dict(),
+                    json=self._request_body.to_dict(),
                 )
             case BaseApiMethod.PATCH:
                 client_response = self._client.patch(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
-                    json=request_body.to_dict(),
+                    params=self._request_params.to_dict(),
+                    json=self._request_body.to_dict(),
                 )
             case BaseApiMethod.DELETE:
                 client_response = self._client.delete(
                     url=self.url,
                     auth=auth,
-                    params=request_params.to_dict(),
+                    params=self._request_params.to_dict(),
                 )
             case _:
                 raise NotImplementedError(f"Method {self.method} not implemented.")
