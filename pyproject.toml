@@ -11,6 +11,7 @@ packages = [{ include = "quickapi" }]
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 httpx = "^0.27.0"
+requests = { version = "^2.31.0", optional = true }
 attrs = "^23.2.0"
 cattrs = "^23.2.3"
 
@@ -23,12 +24,17 @@ mypy = "^1.5.1"
 pre-commit = "^3.4.0"
 tox = "^4.11.1"
 httpx-auth = "^0.22.0"
+responses = "^0.25.0"
+types-requests = "^2.31.0.20240311"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
 mkdocs-material = "^9.2.7"
 mkdocstrings = { extras = ["python"], version = "^0.24.1" }
 markdown-checklist = "^0.4.4"
+
+[tool.poetry.extras]
+requests = ["requests"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
