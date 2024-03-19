@@ -24,3 +24,14 @@ class ResponseSerializationError(QuickApiException):
     def __init__(self, expected_type: str):
         message = f"HTTP response body did not match expected type `{expected_type}`."
         super().__init__(message)
+
+
+class MissingDependencyError(QuickApiException):
+    """Trying to use an optional dependency without installing it first."""
+
+    def __init__(self, dependency: str):
+        message = (
+            f"Using an optional dependecy without installing it first `{dependency}`."
+            f"Please install the dependency using `pip install quickapiclient[{dependency}]`."
+        )
+        super().__init__(message)

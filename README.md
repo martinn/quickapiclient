@@ -51,7 +51,7 @@ assert isinstance(response.body.data[0], Fact) == True
 
 ## Features
 
-It's still early development and this is currently tightly coupled with `httpx` and `attrs`,
+It's still early development and this is currently tightly coupled with `attrs`,
 but could expand to support others in the future if there's interest.
 
 - Write fully typed declarative API clients quickly and easily
@@ -65,14 +65,15 @@ but could expand to support others in the future if there's interest.
   - [ ] Generate API boilerplate from OpenAPI specs?
 - HTTP client libraries
   - [x] httpx
-  - [ ] requests
+  - [x] requests
   - [ ] aiohttp
 - Authentication mechanisms
   - [x] Basic Auth
   - [x] Token / JWT
   - [x] Digest
   - [x] NetRC
-  - [x] Any auth supported by `httpx` or [httpx_auth](https://github.com/Colin-b/httpx_auth), including custom schemes
+  - [x] Any auth supported by `httpx` or [httpx_auth](https://github.com/Colin-b/httpx_auth) or `requests`,
+        including custom schemes
 - Serialization/deserialization
   - [x] attrs
   - [ ] dataclasses
@@ -92,12 +93,16 @@ You can easily install this using `pip`:
 
 ```console
 pip install quickapiclient
+# Or if you want to use `requests` over `httpx`:
+pip install quickapiclient[requests]
 ```
 
 Or if using `poetry`:
 
 ```console
 poetry add quickapiclient
+# Or if you want to use `requests` over `httpx`:
+poetry add quickapiclient[requests]
 ```
 
 ## More examples
@@ -280,6 +285,34 @@ response = client.execute(request_body=request_body)
 ```
 
 Check out [attrs](https://github.com/python-attrs/attrs) for full configuration.
+
+### Using `requests` library
+
+An example of a GET request using the `requests` HTTP library instead of `HTTPx`.
+
+```python
+import attrs
+import quickapi
+
+
+@attrs.define
+class ResponseBody(quickapi.BaseResponseBody):
+    current_page: int
+    data: list[Fact]
+
+
+class MyApi(quickapi.BaseApi[ResponseBody]):
+    url = "https://catfact.ninja/facts"
+    response_body = ResponseBody
+    http_client = quickapi.RequestsClient()
+```
+
+And to use it:
+
+```python
+client = MyApi()
+response = client.execute()
+```
 
 ## Contributing
 

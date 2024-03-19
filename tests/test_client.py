@@ -5,6 +5,7 @@ import cattrs
 import httpx
 import httpx_auth
 import pytest
+import responses
 from pytest_httpx import HTTPXMock
 
 import quickapi
@@ -48,6 +49,27 @@ class TestGetApi:
         client = GetApi()
         response = client.execute()
         assert response.body == cattrs.structure(mock_json, ResponseBody)
+        assert response.body.data[0] == Fact(fact="Some fact", length=9)
+
+
+class GetApiRequestsClient(GetApi):
+    http_client = quickapi.RequestsClient()
+
+
+# TODO: Switch http mock so can re-use tests across http clients
+class TestGetApiRequestsClient:
+    @responses.activate
+    def test_api_call(self):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        responses.add(
+            method=GetApiRequestsClient.method,
+            url=GetApiRequestsClient.url,
+            json=mock_json,
+        )
+
+        client = GetApiRequestsClient()
+        response = client.execute()
+        assert response.body.current_page == 1
         assert response.body.data[0] == Fact(fact="Some fact", length=9)
 
 
@@ -113,6 +135,47 @@ class TestPostApi:
         client = PostApi()
         response = client.execute(request_body=request_body)
         assert response.body == cattrs.structure(mock_json, ResponseBody)
+
+
+class PostApiRequestsClient(PostApi):
+    http_client = quickapi.RequestsClient()
+
+
+class TestPostApiRequestsClient:
+    @responses.activate
+    def test_api_call_with_empty_request_body(self):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        request_body = RequestBody()
+        responses.add(
+            method=PostApiRequestsClient.method,
+            url=PostApiRequestsClient.url,
+            json=mock_json,
+            match=[responses.matchers.json_params_matcher(request_body.to_dict())],
+        )
+
+        client = PostApiRequestsClient()
+        response = client.execute(request_body=request_body)
+        assert response.body.current_page == 1
+        assert response.body.data[0] == Fact(fact="Some fact", length=9)
+
+    @responses.activate
+    def test_api_call_with_request_body(self):
+        mock_json = {
+            "current_page": 1,
+            "data": [{"fact": "Some other fact", "length": 16}],
+        }
+        request_body = RequestBody(some_data="Test body")
+        responses.add(
+            method=PostApiRequestsClient.method,
+            url=PostApiRequestsClient.url,
+            json=mock_json,
+            match=[responses.matchers.json_params_matcher(request_body.to_dict())],
+        )
+
+        client = PostApiRequestsClient()
+        response = client.execute(request_body=request_body)
+        assert response.body.current_page == 1
+        assert response.body.data[0] == Fact(fact="Some other fact", length=16)
 
 
 @attrs.define

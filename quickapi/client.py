@@ -1,13 +1,19 @@
+from contextlib import suppress
 from enum import Enum
-from typing import Any, Generic, TypeVar, get_args
+from typing import TYPE_CHECKING, Generic, TypeVar, get_args
 
 import attrs
 import cattrs
 import httpx
 
 from .exceptions import ClientSetupError, HTTPError, ResponseSerializationError
+from .http_client import BaseAuth, BaseHttpClient, HTTPxClient
 
+if TYPE_CHECKING:
+    with suppress(ImportError):
+        pass
 
+USE_DEFAULT = object()
 
 
 @attrs.define
@@ -63,12 +69,13 @@ class BaseApi(Generic[ResponseBodyT]):
 
     url: str
     method: BaseApiMethod = BaseApiMethod.GET
-    auth: httpx.Auth | Any = httpx.USE_CLIENT_DEFAULT
+    auth: BaseAuth = None
     request_params: type[BaseRequestParams] | None = None
     request_body: type[BaseRequestBody] | None = None
     response_body: type[ResponseBodyT]
+    http_client: type[BaseHttpClient] | BaseHttpClient | None = None
 
-    _client: httpx.Client
+    _http_client: BaseHttpClient = HTTPxClient()
     _request_params: BaseRequestParams = BaseRequestParams()
     _request_body: BaseRequestBody = BaseRequestBody()
     _response_body_cls: type[ResponseBodyT]
@@ -87,6 +94,13 @@ class BaseApi(Generic[ResponseBodyT]):
 
         cls._response_body_cls = cls.response_body  # pyright: ignore [reportGeneralTypeIssues]
 
+        if cls.http_client is not None:
+            cls._http_client = (
+                cls.http_client
+                if isinstance(cls.http_client, BaseHttpClient)
+                else cls.http_client()
+            )
+
     @classmethod
     def _validate_subclass(cls) -> None:
         if getattr(cls, "url", None) is None:
@@ -101,6 +115,12 @@ class BaseApi(Generic[ResponseBodyT]):
         ):
             raise ClientSetupError(attribute="method")
 
+        if getattr(cls, "http_client", None) is not None and not (
+            isinstance(cls.http_client, BaseHttpClient)
+            or issubclass(cls.http_client, BaseHttpClient)  # type: ignore [arg-type]
+        ):
+            raise ClientSetupError(attribute="http_client")
+
         if getattr(cls, "__orig_bases__", None) is not None:
             response_body_generic_type = get_args(cls.__orig_bases__[0])[0]  # type: ignore [attr-defined]
             if (
@@ -113,66 +133,72 @@ class BaseApi(Generic[ResponseBodyT]):
         self,
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
+        http_client: BaseHttpClient | None = None,
+        auth: BaseAuth = USE_DEFAULT,
     ) -> None:
         self._request_params = request_params or self._request_params
         self._request_body = request_body or self._request_body
+        self._http_client = http_client or self._http_client
+        self.auth = auth if auth != USE_DEFAULT else self.auth
 
     def execute(
         self,
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
-        auth: httpx.Auth | Any = httpx.USE_CLIENT_DEFAULT,
+        http_client: BaseHttpClient | None = None,
+        auth: BaseAuth = USE_DEFAULT,
     ) -> BaseResponse[ResponseBodyT]:
         """Execute the API request and return the response."""
 
-        auth = auth if auth != httpx.USE_CLIENT_DEFAULT else self.auth
         self._request_params = request_params or self._request_params
         self._request_body = request_body or self._request_body
+        self._http_client = http_client or self._http_client
+        self.auth = auth if auth != USE_DEFAULT else self.auth
 
         match self.method:
             case BaseApiMethod.GET:
-                client_response = self._client.get(
+                client_response = self._http_client.get(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                 )
             case BaseApiMethod.OPTIONS:
-                client_response = self._client.options(
+                client_response = self._http_client.options(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                 )
             case BaseApiMethod.HEAD:
-                client_response = self._client.head(
+                client_response = self._http_client.head(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                 )
             case BaseApiMethod.POST:
-                client_response = self._client.post(
+                client_response = self._http_client.post(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                     json=self._request_body.to_dict(),
                 )
             case BaseApiMethod.PUT:
-                client_response = self._client.put(
+                client_response = self._http_client.put(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                     json=self._request_body.to_dict(),
                 )
             case BaseApiMethod.PATCH:
-                client_response = self._client.patch(
+                client_response = self._http_client.patch(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                     json=self._request_body.to_dict(),
                 )
             case BaseApiMethod.DELETE:
-                client_response = self._client.delete(
+                client_response = self._http_client.delete(
                     url=self.url,
-                    auth=auth,
+                    auth=self.auth,
                     params=self._request_params.to_dict(),
                 )
             case _:
