@@ -30,7 +30,7 @@ class BaseRequestBody:
 ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
 
 
-# TODO: Needs to support differebt response body types (json, text, xml, etc)
+# TODO: Needs to support different response body types (json, text, xml, etc)
 class BaseResponseBody(Generic[ResponseBodyT]):
     @classmethod
     def from_dict(cls: type[ResponseBodyT], value: dict) -> ResponseBodyT:

@@ -6,6 +6,7 @@ import httpx
 from .exceptions import MissingDependencyError
 
 if TYPE_CHECKING:
+    # Optional dependency
     with suppress(ImportError):
         import requests
 
