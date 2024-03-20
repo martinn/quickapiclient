@@ -1,6 +1,5 @@
-from contextlib import suppress
 from enum import Enum
-from typing import TYPE_CHECKING, Generic, TypeVar, get_args
+from typing import Generic, TypeVar, get_args
 
 import attrs
 import cattrs
@@ -9,9 +8,6 @@ import httpx
 from .exceptions import ClientSetupError, HTTPError, ResponseSerializationError
 from .http_client import BaseAuth, BaseHttpClient, HTTPxClient
 
-if TYPE_CHECKING:
-    with suppress(ImportError):
-        pass
 
 USE_DEFAULT = object()
 
