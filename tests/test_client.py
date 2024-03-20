@@ -377,6 +377,14 @@ class TestClientSetupError:
                 url = "https://example.com/facts"
                 response_body = ResponseBody
 
+    def test_should_raise_error_if_invalid_http_client(self, httpx_mock: HTTPXMock):
+        with pytest.raises(quickapi.ClientSetupError):
+
+            class _(quickapi.BaseApi[ResponseBody]):
+                url = "https://example.com/facts"
+                http_client = object()  # pyright: ignore [reportAssignmentType]
+                response_body = ResponseBody
+
 
 class TestSerializationError:
     def test_error_if_response_body_attribute_incorrect_type(

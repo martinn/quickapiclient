@@ -72,7 +72,7 @@ class BaseApi(Generic[ResponseBodyT]):
     request_params: type[BaseRequestParams] | None = None
     request_body: type[BaseRequestBody] | None = None
     response_body: type[ResponseBodyT]
-    http_client: type[BaseHttpClient] | BaseHttpClient | None = None
+    http_client: BaseHttpClient | None = None
 
     _http_client: BaseHttpClient = HTTPxClient()
     _request_params: BaseRequestParams = BaseRequestParams()
@@ -94,11 +94,7 @@ class BaseApi(Generic[ResponseBodyT]):
         cls._response_body_cls = cls.response_body  # pyright: ignore [reportGeneralTypeIssues]
 
         if cls.http_client is not None:
-            cls._http_client = (
-                cls.http_client
-                if isinstance(cls.http_client, BaseHttpClient)
-                else cls.http_client()
-            )
+            cls._http_client = cls.http_client
 
     @classmethod
     def _validate_subclass(cls) -> None:
@@ -116,7 +112,6 @@ class BaseApi(Generic[ResponseBodyT]):
 
         if getattr(cls, "http_client", None) is not None and not (
             isinstance(cls.http_client, BaseHttpClient)
-            or issubclass(cls.http_client, BaseHttpClient)  # type: ignore [arg-type]
         ):
             raise ClientSetupError(attribute="http_client")
 
