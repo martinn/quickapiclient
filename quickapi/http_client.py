@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 BaseHttpClientAuth: TypeAlias = (
     httpx.Auth | type["requests.auth.AuthBase"] | object | None
 )
+BaseHttpClientResponse: TypeAlias = httpx.Response | type["requests.Response"] | None
 
 
 class BaseHttpClient:

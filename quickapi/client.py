@@ -3,12 +3,12 @@ from typing import Generic, TypeVar, get_args
 
 import attrs
 import cattrs
-import httpx
 
 from .exceptions import ClientSetupError, HTTPError, ResponseSerializationError
 from .http_client import (
     BaseHttpClient,
     BaseHttpClientAuth,
+    BaseHttpClientResponse,
     HTTPxClient,
 )
 
@@ -42,7 +42,7 @@ class BaseResponseBody(Generic[ResponseBodyT]):
 
 @attrs.define
 class BaseResponse(Generic[ResponseBodyT]):
-    client_response: httpx.Response
+    client_response: BaseHttpClientResponse
     body: ResponseBodyT
 
 
