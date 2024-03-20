@@ -62,7 +62,7 @@ jobs:
         if: ${{ matrix.python-version == '3.11' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: martinn/quickapi
+          slug: martinn/quickapiclient
 
   check-docs:
     runs-on: ubuntu-latest
