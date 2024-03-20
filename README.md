@@ -87,6 +87,30 @@ but could expand to support others in the future if there's interest.
   - [ ] XML
   - [ ] Others?
 
+## Goal
+
+Eventually, I would like for the API definition to end up looking more like this (though the current approach will still be supported):
+
+```python
+import quickapi
+
+
+@quickapi.define
+class MyApi:
+    url = "https://catfact.ninja/facts"
+    method = quickapi.BaseApiMethod.POST
+
+    class RequestBody:
+        required_input: str
+        optional_input: str | None = None
+
+    class ResponseBody:
+        current_page: int
+        data: list[Fact]
+```
+
+And also to be able to support multiple endpoints per API client.
+
 ## Installation
 
 You can easily install this using `pip`:
