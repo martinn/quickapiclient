@@ -10,7 +10,9 @@ if TYPE_CHECKING:
         import requests
 
 # TODO: Fix types
-BaseAuth: TypeAlias = httpx.Auth | type["requests.auth.AuthBase"] | object | None
+BaseHttpClientAuth: TypeAlias = (
+    httpx.Auth | type["requests.auth.AuthBase"] | object | None
+)
 
 
 class BaseHttpClient:

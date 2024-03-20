@@ -6,8 +6,11 @@ import cattrs
 import httpx
 
 from .exceptions import ClientSetupError, HTTPError, ResponseSerializationError
-from .http_client import BaseAuth, BaseHttpClient, HTTPxClient
-
+from .http_client import (
+    BaseHttpClient,
+    BaseHttpClientAuth,
+    HTTPxClient,
+)
 
 USE_DEFAULT = object()
 
@@ -65,7 +68,7 @@ class BaseApi(Generic[ResponseBodyT]):
 
     url: str
     method: BaseApiMethod = BaseApiMethod.GET
-    auth: BaseAuth = None
+    auth: BaseHttpClientAuth = None
     request_params: type[BaseRequestParams] | None = None
     request_body: type[BaseRequestBody] | None = None
     response_body: type[ResponseBodyT]
@@ -130,7 +133,7 @@ class BaseApi(Generic[ResponseBodyT]):
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
         http_client: BaseHttpClient | None = None,
-        auth: BaseAuth = USE_DEFAULT,
+        auth: BaseHttpClientAuth = USE_DEFAULT,
     ) -> None:
         self._request_params = request_params or self._request_params
         self._request_body = request_body or self._request_body
@@ -142,7 +145,7 @@ class BaseApi(Generic[ResponseBodyT]):
         request_params: BaseRequestParams | None = None,
         request_body: BaseRequestBody | None = None,
         http_client: BaseHttpClient | None = None,
-        auth: BaseAuth = USE_DEFAULT,
+        auth: BaseHttpClientAuth = USE_DEFAULT,
     ) -> BaseResponse[ResponseBodyT]:
         """Execute the API request and return the response."""
 
