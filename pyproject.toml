@@ -103,6 +103,12 @@ preview = true
 
 [tool.coverage.report]
 skip_empty = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "@(abc\\.)?abstractmethod",
+]
 
 [tool.coverage.run]
 branch = true
