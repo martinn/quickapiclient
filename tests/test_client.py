@@ -40,7 +40,6 @@ class GetApi(quickapi.BaseApi[ResponseBody]):
     response_body = ResponseBody
 
 
-# TODO: Build real mock API to easily test various scenarios?
 class TestGetApi:
     def test_api_call(self, httpx_mock: HTTPXMock):
         mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
@@ -104,6 +103,52 @@ class TestGetWithParamsApi:
         assert response.body == cattrs.structure(mock_json, ResponseBody)
 
 
+class OptionsApi(GetApi):
+    method = quickapi.BaseApiMethod.OPTIONS
+
+
+# TODO: Reduce code duplication in tests
+class TestOptionsApi:
+    def test_api_call(self, httpx_mock: HTTPXMock):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        httpx_mock.add_response(method=OptionsApi.method, json=mock_json)
+
+        client = OptionsApi()
+        response = client.execute()
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+        assert response.body.data[0] == Fact(fact="Some fact", length=9)
+
+
+class HeadApi(GetApi):
+    method = quickapi.BaseApiMethod.HEAD
+
+
+class TestHeadApi:
+    def test_api_call(self, httpx_mock: HTTPXMock):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        httpx_mock.add_response(method=HeadApi.method, json=mock_json)
+
+        client = HeadApi()
+        response = client.execute()
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+        assert response.body.data[0] == Fact(fact="Some fact", length=9)
+
+
+class DeleteApi(GetApi):
+    method = quickapi.BaseApiMethod.DELETE
+
+
+class TestDeleteApi:
+    def test_api_call(self, httpx_mock: HTTPXMock):
+        mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
+        httpx_mock.add_response(method=DeleteApi.method, json=mock_json)
+
+        client = DeleteApi()
+        response = client.execute()
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+        assert response.body.data[0] == Fact(fact="Some fact", length=9)
+
+
 class PostApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
     method = quickapi.BaseApiMethod.POST
@@ -117,7 +162,7 @@ class TestPostApi:
         mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
         request_body = RequestBody()
         httpx_mock.add_response(
-            method="POST", match_json=request_body.to_dict(), json=mock_json
+            method=PostApi.method, match_json=request_body.to_dict(), json=mock_json
         )
         client = PostApi()
         response = client.execute(request_body=request_body)
@@ -130,7 +175,7 @@ class TestPostApi:
         }
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
-            method="POST", match_json=request_body.to_dict(), json=mock_json
+            method=PostApi.method, match_json=request_body.to_dict(), json=mock_json
         )
         client = PostApi()
         response = client.execute(request_body=request_body)
@@ -176,6 +221,44 @@ class TestPostApiRequestsClient:
         response = client.execute(request_body=request_body)
         assert response.body.current_page == 1
         assert response.body.data[0] == Fact(fact="Some other fact", length=16)
+
+
+class PutApi(PostApi):
+    method = quickapi.BaseApiMethod.PUT
+
+
+class TestPutApi:
+    def test_api_call_with_request_body(self, httpx_mock: HTTPXMock):
+        mock_json = {
+            "current_page": 1,
+            "data": [{"fact": "Some other fact", "length": 16}],
+        }
+        request_body = RequestBody(some_data="Test body")
+        httpx_mock.add_response(
+            method=PutApi.method, match_json=request_body.to_dict(), json=mock_json
+        )
+        client = PutApi()
+        response = client.execute(request_body=request_body)
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
+
+
+class PatchApi(PostApi):
+    method = quickapi.BaseApiMethod.PATCH
+
+
+class TestPatchApi:
+    def test_api_call_with_request_body(self, httpx_mock: HTTPXMock):
+        mock_json = {
+            "current_page": 1,
+            "data": [{"fact": "Some other fact", "length": 16}],
+        }
+        request_body = RequestBody(some_data="Test body")
+        httpx_mock.add_response(
+            method=PatchApi.method, match_json=request_body.to_dict(), json=mock_json
+        )
+        client = PatchApi()
+        response = client.execute(request_body=request_body)
+        assert response.body == cattrs.structure(mock_json, ResponseBody)
 
 
 @attrs.define
