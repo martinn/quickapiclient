@@ -62,7 +62,8 @@ but could expand to support others in the future if there's interest.
   - [ ] Nested/inner class definitions
   - [ ] Improved HTTP status codes error handling
   - [ ] Sessions support and/or allow building several related APIs through a single interface
-  - [ ] Generate API boilerplate from OpenAPI specs?
+  - [ ] Generate API boilerplate from OpenAPI specs
+  - [ ] Full async support
 - HTTP client libraries
   - [x] httpx
   - [x] requests
@@ -342,5 +343,8 @@ response = client.execute()
 
 Contributions are welcomed, and greatly appreciated!
 
-If you want to contribute, check out the
-[contributing guide](./CONTRIBUTING.md) to get started.
+The easiest way to contribute, if you found this useful or interesting,
+is by giving it a star! 🌟
+
+Otherwise, check out the
+[contributing guide](./CONTRIBUTING.md) for how else to help and get started.
