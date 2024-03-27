@@ -121,3 +121,6 @@ source = ["quickapi"]
 
 [tool.ruff.per-file-ignores]
 "tests/*" = ["S101"]
+
+[tool.deptry]
+known_first_party = ["_typeshed"]
