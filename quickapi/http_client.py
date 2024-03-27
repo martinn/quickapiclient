@@ -1,21 +1,20 @@
 from abc import ABC, abstractmethod
-from contextlib import suppress
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TypeAlias
 
 import httpx
 
 from .exceptions import MissingDependencyError
 
-if TYPE_CHECKING:
-    # Optional dependency
-    with suppress(ImportError):
-        import requests
+try:
+    import requests
+except ImportError:
+    requests_installed = False
+else:
+    requests_installed = True
 
 # TODO: Fix types
-BaseHttpClientAuth: TypeAlias = (
-    httpx.Auth | type["requests.auth.AuthBase"] | object | None
-)
-BaseHttpClientResponse: TypeAlias = httpx.Response | type["requests.Response"] | None
+BaseHttpClientAuth: TypeAlias = "httpx.Auth | requests.auth.AuthBase | object | None"
+BaseHttpClientResponse: TypeAlias = "httpx.Response | requests.Response | None"
 
 
 class BaseHttpClient(ABC):
@@ -91,10 +90,8 @@ class RequestsClient(BaseHttpClient):
     """
 
     def __init__(self, client: type["requests.sessions.Session"] | None = None):
-        try:
-            import requests
-        except ImportError as exc:
-            raise MissingDependencyError(dependency="requests") from exc
+        if requests_installed is False:
+            raise MissingDependencyError(dependency="requests")
 
         self._client = client or requests.sessions.Session()
 
