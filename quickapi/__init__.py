@@ -4,7 +4,11 @@ from .client import (  # noqa: F401
 )
 from .exceptions import (  # noqa: F401
     ClientSetupError,
+    DictDeserializationError,
+    DictSerializationError,
     HTTPError,
+    MissingDependencyError,
+    RequestSerializationError,
     ResponseSerializationError,
 )
 from .http_client import BaseHttpClient, HTTPxClient, RequestsClient  # noqa: F401

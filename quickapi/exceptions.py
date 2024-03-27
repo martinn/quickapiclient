@@ -18,6 +18,26 @@ class HTTPError(QuickApiException):
         super().__init__(message)
 
 
+class DictSerializationError(QuickApiException):
+    """Dict serialization failed."""
+
+    expected_type = ""
+
+    def __init__(self, expected_type: str):
+        self.expected_type = expected_type
+        super().__init__(self.__doc__)
+
+
+class DictDeserializationError(QuickApiException):
+    """Dict deserialization failed."""
+
+    expected_type = ""
+
+    def __init__(self, expected_type: str):
+        self.expected_type = expected_type
+        super().__init__(self.__doc__)
+
+
 class ResponseSerializationError(QuickApiException):
     """The response received was not serializable to the configured `response_body` type."""
 

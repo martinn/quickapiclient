@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from _typeshed import DataclassInstance
 
 from .exceptions import (
-    RequestSerializationError,
-    ResponseSerializationError,
+    DictDeserializationError,
+    DictSerializationError,
 )
 
 try:
@@ -67,7 +67,7 @@ class DataclassSerializer:
             # TODO: See if there's a simpler approach so we can remove this hard dependency
             return cattrs.structure(values, klass)
         except cattrs.ClassValidationError as e:
-            raise ResponseSerializationError(expected_type=klass.__name__) from e
+            raise DictSerializationError(expected_type=klass.__name__) from e
 
 
 class DataclassDeserializer:
@@ -101,7 +101,7 @@ class AttrsSerializer:
         try:
             return cattrs.structure(values, klass)
         except cattrs.ClassValidationError as e:
-            raise ResponseSerializationError(expected_type=klass.__name__) from e
+            raise DictSerializationError(expected_type=klass.__name__) from e
 
 
 class AttrsDeserializer:
@@ -135,7 +135,7 @@ class PydanticSerializer:
         try:
             return klass(**values)
         except pydantic.ValidationError as e:
-            raise ResponseSerializationError(expected_type=klass.__name__) from e
+            raise DictSerializationError(expected_type=klass.__name__) from e
 
 
 class PydanticDeserializer:
@@ -176,11 +176,11 @@ class DictSerializable:
         for serializer in cls.serializers:
             if serializer.can_apply(klass):
                 return serializer.from_dict(klass, values)
-        raise ResponseSerializationError(expected_type=klass.__name__)
+        raise DictSerializationError(expected_type=klass.__name__)
 
     @classmethod
     def to_dict(cls, instance: DictSerializableT) -> dict | None:
         for deserializer in cls.deserializers:
             if deserializer.can_apply(instance):
                 return deserializer.to_dict(instance)
-        raise RequestSerializationError(expected_type=str(DictSerializableT))
+        raise DictDeserializationError(expected_type=str(DictSerializableT))

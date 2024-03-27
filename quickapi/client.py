@@ -2,7 +2,14 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, TypeVar, get_args
 
-from .exceptions import ClientSetupError, HTTPError
+from .exceptions import (
+    ClientSetupError,
+    DictDeserializationError,
+    DictSerializationError,
+    HTTPError,
+    RequestSerializationError,
+    ResponseSerializationError,
+)
 from .http_client import (
     BaseHttpClient,
     BaseHttpClientAuth,
@@ -127,14 +134,19 @@ class BaseApi(Generic[ResponseBodyT]):
         self._request_body = request_body or self._request_body
         self._http_client = http_client or self._http_client
         self.auth = auth if auth != USE_DEFAULT else self.auth
-        params = (
-            DictSerializable.to_dict(self._request_params)
-            if self._request_params
-            else {}
-        )
-        json = (
-            DictSerializable.to_dict(self._request_body) if self._request_body else {}
-        )
+        try:
+            params = (
+                DictSerializable.to_dict(self._request_params)
+                if self._request_params
+                else {}
+            )
+            json = (
+                DictSerializable.to_dict(self._request_body)
+                if self._request_body
+                else {}
+            )
+        except DictDeserializationError as e:
+            raise RequestSerializationError(expected_type=e.expected_type) from e
 
         match self.method:
             case BaseApiMethod.GET:
@@ -189,9 +201,13 @@ class BaseApi(Generic[ResponseBodyT]):
         if client_response.status_code != 200:
             raise HTTPError(client_response.status_code)
 
-        body = DictSerializable.from_dict(
-            self._response_body_cls, client_response.json()
-        )
+        try:
+            body = DictSerializable.from_dict(
+                self._response_body_cls, client_response.json()
+            )
+        except DictSerializationError as e:
+            raise ResponseSerializationError(expected_type=e.expected_type) from e
+
         self._response = BaseResponse(client_response=client_response, body=body)
 
         return self._response
