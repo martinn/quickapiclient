@@ -14,20 +14,20 @@ A library for creating fully typed declarative API clients quickly and easily.
 An API definition for a simple service could look like this:
 
 ```python
-import attrs
+from dataclasses import dataclass
 import quickapi
 
 
 # An example type that will be part of the API response
-@attrs.define
+@dataclass
 class Fact:
     fact: str
     length: int
 
 
 # What the API response should look like
-@attrs.define
-class ResponseBody(quickapi.BaseResponseBody):
+@dataclass
+class ResponseBody:
     current_page: int
     data: list[Fact]
 
@@ -45,19 +45,22 @@ api_client = MyApi()
 response = api_client.execute()
 
 # That's it! Now `response` is fully typed and conforms to our `ResponseBody` definition
-assert isinstance(response.body, ResponseBody) == True
-assert isinstance(response.body.data[0], Fact) == True
+assert isinstance(response.body, ResponseBody)
+assert isinstance(response.body.data[0], Fact)
 ```
+
+There's also support for `attrs` or `pydantic` for more complex modeling, validation or serialization support.
+
+Scroll down [here](#a-post-request-with-validation-and-conversion-using-attrs) for examples using those.
 
 ## Features
 
-It's still early development and this is currently tightly coupled with `attrs`,
-but could expand to support others in the future if there's interest.
+It's still early development but so far we have support for:
 
 - Write fully typed declarative API clients quickly and easily
   - [x] Fully typed request params / body
   - [x] Fully typed response body
-  - [x] Built in serialization/deserialization with `attrs`
+  - [x] Serialization/deserialization support
   - [x] Basic error and serialization handling
   - [ ] Nested/inner class definitions
   - [ ] Improved HTTP status codes error handling
@@ -73,16 +76,15 @@ but could expand to support others in the future if there's interest.
   - [x] Token / JWT
   - [x] Digest
   - [x] NetRC
-  - [x] Any auth supported by `httpx` or [httpx_auth](https://github.com/Colin-b/httpx_auth) or `requests`,
-        including custom schemes
+  - [x] Any auth supported by `httpx` or [httpx_auth](https://github.com/Colin-b/httpx_auth) or `requests`, including custom schemes
 - Serialization/deserialization
   - [x] attrs
-  - [ ] dataclasses
-  - [ ] pydantic
+  - [x] dataclasses
+  - [x] pydantic
 - API support
   - [x] REST
   - [ ] GraphQL
-  - [ ] Maybe others?
+  - [ ] Others?
 - Response types supported
   - [x] JSON
   - [ ] XML
@@ -118,6 +120,10 @@ You can easily install this using `pip`:
 
 ```console
 pip install quickapiclient
+# Or if you want to use `attrs` over `dataclasses`:
+pip install quickapiclient[attrs]
+# Or if you want to use `pydantic` over `dataclasses`:
+pip install quickapiclient[pydantic]
 # Or if you want to use `requests` over `httpx`:
 pip install quickapiclient[requests]
 ```
@@ -126,6 +132,10 @@ Or if using `poetry`:
 
 ```console
 poetry add quickapiclient
+# Or if you want to use `attrs` over `dataclasses`:
+poetry add quickapiclient[attrs]
+# Or if you want to use `pydantic` over `dataclasses`:
+poetry add quickapiclient[pydantic]
 # Or if you want to use `requests` over `httpx`:
 poetry add quickapiclient[requests]
 ```
@@ -137,24 +147,24 @@ poetry add quickapiclient[requests]
 An example of a GET request with query parameters with overridable default values.
 
 ```python
-import attrs
+from dataclasses import dataclass
 import quickapi
 
 
-@attrs.define
-class RequestParams(quickapi.BaseRequestParams):
+@dataclass
+class RequestParams:
     max_length: int = 100
     limit: int = 10
 
 
-@attrs.define
+@dataclass
 class Fact:
     fact: str
     length: int
 
 
-@attrs.define
-class ResponseBody(quickapi.BaseResponseBody):
+@dataclass
+class ResponseBody:
     current_page: int
     data: list[Fact]
 
@@ -182,24 +192,24 @@ response = client.execute(request_params=request_params)
 An example of a POST request with some optional and required data.
 
 ```python
-import attrs
+from dataclasses import dataclass
 import quickapi
 
 
-@attrs.define
-class RequestBody(quickapi.BaseRequestBody):
+@dataclass
+class RequestBody:
     required_input: str
     optional_input: str | None = None
 
 
-@attrs.define
+@dataclass
 class Fact:
     fact: str
     length: int
 
 
-@attrs.define
-class ResponseBody(quickapi.BaseResponseBody):
+@dataclass
+class ResponseBody:
     current_page: int
     data: list[Fact]
 
@@ -224,25 +234,25 @@ response = client.execute(request_body=request_body)
 An example of a POST request with HTTP header API key.
 
 ```python
-import attrs
+from dataclasses import dataclass
 import httpx_auth
 import quickapi
 
 
-@attrs.define
-class RequestBody(quickapi.BaseRequestBody):
+@dataclass
+class RequestBody:
     required_input: str
     optional_input: str | None = None
 
 
-@attrs.define
+@dataclass
 class Fact:
     fact: str
     length: int
 
 
-@attrs.define
-class AuthResponseBody(quickapi.BaseResponseBody):
+@dataclass
+class AuthResponseBody:
     authenticated: bool
     user: str
 
@@ -264,9 +274,9 @@ auth = httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="secret_api_key"
 response = client.execute(request_body=request_body, auth=auth)
 ```
 
-### A POST request with validation and conversion
+### A POST request with validation and conversion (Using `attrs`)
 
-An example of a POST request with custom validators and converters (from `attrs`).
+An example of a POST request with custom validators and converters (using `attrs` instead).
 
 ```python
 import attrs
@@ -280,7 +290,7 @@ class State(enum.Enum):
 
 
 @attrs.define
-class RequestBody(quickapi.BaseRequestBody):
+class RequestBody:
     state: State = attrs.field(validator=attrs.validators.in_(State))
     email: str = attrs.field(
         validator=attrs.validators.matches_re(
@@ -290,7 +300,7 @@ class RequestBody(quickapi.BaseRequestBody):
 
 
 @attrs.define
-class ResponseBody(quickapi.BaseResponseBody):
+class ResponseBody:
     success: bool = attrs.field(converter=attrs.converters.to_bool)
 
 
@@ -311,17 +321,58 @@ response = client.execute(request_body=request_body)
 
 Check out [attrs](https://github.com/python-attrs/attrs) for full configuration.
 
+### A POST request with validation and conversion (Using `pydantic`)
+
+An example of a POST request with custom validators and converters (using `pydantic` instead).
+
+```python
+import enum
+import pydantic
+import quickapi
+
+
+class State(enum.Enum):
+    ON = "on"
+    OFF = "off"
+
+
+class RequestBody(pydantic.BaseModel):
+    state: State
+    email: pydantic.EmailStr
+
+
+class ResponseBody(pydantic.BaseModel):
+    success: bool
+
+
+class MyApi(quickapi.BaseApi[ResponseBody]):
+    url = "https://example.com/"
+    method = quickapi.BaseApiMethod.POST
+    request_body = RequestBody
+    response_body = ResponseBody
+```
+
+And to use it:
+
+```python
+client = MyApi()
+request_body = RequestBody(email="invalid_email", state="on") # Will raise an error
+response = client.execute(request_body=request_body)
+```
+
+Check out [pydantic](https://github.com/pydantic/pydantic) for full configuration.
+
 ### Using `requests` library
 
 An example of a GET request using the `requests` HTTP library instead of `HTTPx`.
 
 ```python
-import attrs
+from dataclasses import dataclass
 import quickapi
 
 
-@attrs.define
-class ResponseBody(quickapi.BaseResponseBody):
+@dataclass
+class ResponseBody:
     current_page: int
     data: list[Fact]
 
