@@ -112,6 +112,7 @@ exclude_also = [
     "raise AssertionError",
     "raise NotImplementedError",
     "@(abc\\.)?abstractmethod",
+    "case _:",
 ]
 
 [tool.coverage.run]
