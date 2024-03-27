@@ -68,20 +68,13 @@ If you are using `pyenv`, select a version to use locally. (See installed versio
 pyenv local <x.y.z>
 ```
 
-Then, install and activate the environment with:
+Then, install, activate the environment and setup pre-commit with:
 
 ```bash
-poetry install
-poetry shell
+make install
 ```
 
-4. Install pre-commit to run linters/formatters at commit time:
-
-```bash
-poetry run pre-commit install
-```
-
-5. Create a branch for local development:
+4. Create a branch for local development:
 
 ```bash
 git checkout -b name-of-your-bugfix-or-feature
@@ -89,9 +82,9 @@ git checkout -b name-of-your-bugfix-or-feature
 
 Now you can make your changes locally.
 
-6. Don't forget to add test cases for your added functionality to the `tests` directory.
+5. Don't forget to add test cases for your added functionality to the `tests` directory.
 
-7. When you're done making changes, check that your changes pass the formatting tests.
+6. When you're done making changes, check that your changes pass the formatting tests.
 
 ```bash
 make check
