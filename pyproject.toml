@@ -37,6 +37,8 @@ markdown-checklist = "^0.4.4"
 
 [tool.poetry.extras]
 requests = ["requests"]
+attrs = ["attrs", "cattrs"]
+pydantic = ["pydantic"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
