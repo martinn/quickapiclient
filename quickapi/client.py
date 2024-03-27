@@ -1,46 +1,25 @@
+from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, TypeVar, get_args
 
-import attrs
-import cattrs
-
-from .exceptions import ClientSetupError, HTTPError, ResponseSerializationError
+from .exceptions import ClientSetupError, HTTPError
 from .http_client import (
     BaseHttpClient,
     BaseHttpClientAuth,
     BaseHttpClientResponse,
     HTTPxClient,
 )
+from .serializers import (
+    DictSerializable,
+    DictSerializableT,
+)
 
 USE_DEFAULT = object()
 
-
-@attrs.define
-class BaseRequestParams:
-    def to_dict(self: "BaseRequestParams") -> dict:
-        return attrs.asdict(self)
+ResponseBodyT = TypeVar("ResponseBodyT")
 
 
-@attrs.define
-class BaseRequestBody:
-    def to_dict(self: "BaseRequestBody") -> dict:
-        return attrs.asdict(self)
-
-
-ResponseBodyT = TypeVar("ResponseBodyT", bound="BaseResponseBody")
-
-
-# TODO: Needs to support different response body types (json, text, xml, etc)
-class BaseResponseBody(Generic[ResponseBodyT]):
-    @classmethod
-    def from_dict(cls: type[ResponseBodyT], value: dict) -> ResponseBodyT:
-        try:
-            return cattrs.structure(value, cls)
-        except cattrs.ClassValidationError as e:
-            raise ResponseSerializationError(expected_type=cls.__name__) from e
-
-
-@attrs.define
+@dataclass
 class BaseResponse(Generic[ResponseBodyT]):
     client_response: BaseHttpClientResponse
     body: ResponseBodyT
@@ -69,14 +48,14 @@ class BaseApi(Generic[ResponseBodyT]):
     url: str
     method: BaseApiMethod = BaseApiMethod.GET
     auth: BaseHttpClientAuth = None
-    request_params: type[BaseRequestParams] | None = None
-    request_body: type[BaseRequestBody] | None = None
+    request_params: type[DictSerializableT] | None = None
+    request_body: type[DictSerializableT] | None = None
     response_body: type[ResponseBodyT]
     http_client: BaseHttpClient | None = None
 
     _http_client: BaseHttpClient = HTTPxClient()
-    _request_params: BaseRequestParams = BaseRequestParams()
-    _request_body: BaseRequestBody = BaseRequestBody()
+    _request_params: "DictSerializableT | None" = None
+    _request_body: "DictSerializableT | None" = None
     _response_body_cls: type[ResponseBodyT]
     _response: BaseResponse[ResponseBodyT] | None = None
 
@@ -125,8 +104,8 @@ class BaseApi(Generic[ResponseBodyT]):
 
     def __init__(
         self,
-        request_params: BaseRequestParams | None = None,
-        request_body: BaseRequestBody | None = None,
+        request_params: "DictSerializableT | None" = None,
+        request_body: "DictSerializableT | None" = None,
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
     ) -> None:
@@ -137,8 +116,8 @@ class BaseApi(Generic[ResponseBodyT]):
 
     def execute(
         self,
-        request_params: BaseRequestParams | None = None,
-        request_body: BaseRequestBody | None = None,
+        request_params: "DictSerializableT | None" = None,
+        request_body: "DictSerializableT | None" = None,
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
     ) -> BaseResponse[ResponseBodyT]:
@@ -148,52 +127,60 @@ class BaseApi(Generic[ResponseBodyT]):
         self._request_body = request_body or self._request_body
         self._http_client = http_client or self._http_client
         self.auth = auth if auth != USE_DEFAULT else self.auth
+        params = (
+            DictSerializable.to_dict(self._request_params)
+            if self._request_params
+            else {}
+        )
+        json = (
+            DictSerializable.to_dict(self._request_body) if self._request_body else {}
+        )
 
         match self.method:
             case BaseApiMethod.GET:
                 client_response = self._http_client.get(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
+                    params=params,
                 )
             case BaseApiMethod.OPTIONS:
                 client_response = self._http_client.options(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
+                    params=params,
                 )
             case BaseApiMethod.HEAD:
                 client_response = self._http_client.head(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
+                    params=params,
                 )
             case BaseApiMethod.POST:
                 client_response = self._http_client.post(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
-                    json=self._request_body.to_dict(),
+                    params=params,
+                    json=json,
                 )
             case BaseApiMethod.PUT:
                 client_response = self._http_client.put(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
-                    json=self._request_body.to_dict(),
+                    params=params,
+                    json=json,
                 )
             case BaseApiMethod.PATCH:
                 client_response = self._http_client.patch(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
-                    json=self._request_body.to_dict(),
+                    params=params,
+                    json=json,
                 )
             case BaseApiMethod.DELETE:
                 client_response = self._http_client.delete(
                     url=self.url,
                     auth=self.auth,
-                    params=self._request_params.to_dict(),
+                    params=params,
                 )
             case _:
                 raise NotImplementedError(f"Method {self.method} not implemented.")
@@ -202,7 +189,9 @@ class BaseApi(Generic[ResponseBodyT]):
         if client_response.status_code != 200:
             raise HTTPError(client_response.status_code)
 
-        body = self._response_body_cls.from_dict(client_response.json())
+        body = DictSerializable.from_dict(
+            self._response_body_cls, client_response.json()
+        )
         self._response = BaseResponse(client_response=client_response, body=body)
 
         return self._response

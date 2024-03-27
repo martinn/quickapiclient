@@ -18,18 +18,18 @@ class Fact:
 
 
 @attrs.define
-class RequestParams(quickapi.BaseRequestParams):
+class RequestParams:
     max_length: int = 100
     limit: int = 10
 
 
 @attrs.define
-class RequestBody(quickapi.BaseRequestBody):
+class RequestBody:
     some_data: str | None = None
 
 
 @attrs.define
-class ResponseBody(quickapi.BaseResponseBody):
+class ResponseBody:
     current_page: int = attrs.field(validator=attrs.validators.lt(100))
     data: list[Fact] = attrs.field(factory=list)
 
@@ -162,7 +162,9 @@ class TestPostApi:
         mock_json = {"current_page": 1, "data": [{"fact": "Some fact", "length": 9}]}
         request_body = RequestBody()
         httpx_mock.add_response(
-            method=PostApi.method, match_json=request_body.to_dict(), json=mock_json
+            method=PostApi.method,
+            match_json=quickapi.DictSerializable.to_dict(request_body),
+            json=mock_json,
         )
         client = PostApi()
         response = client.execute(request_body=request_body)
@@ -175,7 +177,9 @@ class TestPostApi:
         }
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
-            method=PostApi.method, match_json=request_body.to_dict(), json=mock_json
+            method=PostApi.method,
+            match_json=quickapi.DictSerializable.to_dict(request_body),
+            json=mock_json,
         )
         client = PostApi()
         response = client.execute(request_body=request_body)
@@ -195,7 +199,11 @@ class TestPostApiRequestsClient:
             method=PostApiRequestsClient.method,
             url=PostApiRequestsClient.url,
             json=mock_json,
-            match=[responses.matchers.json_params_matcher(request_body.to_dict())],
+            match=[
+                responses.matchers.json_params_matcher(
+                    quickapi.DictSerializable.to_dict(request_body)
+                )
+            ],
         )
 
         client = PostApiRequestsClient()
@@ -214,7 +222,11 @@ class TestPostApiRequestsClient:
             method=PostApiRequestsClient.method,
             url=PostApiRequestsClient.url,
             json=mock_json,
-            match=[responses.matchers.json_params_matcher(request_body.to_dict())],
+            match=[
+                responses.matchers.json_params_matcher(
+                    quickapi.DictSerializable.to_dict(request_body)
+                )
+            ],
         )
 
         client = PostApiRequestsClient()
@@ -235,7 +247,9 @@ class TestPutApi:
         }
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
-            method=PutApi.method, match_json=request_body.to_dict(), json=mock_json
+            method=PutApi.method,
+            match_json=quickapi.DictSerializable.to_dict(request_body),
+            json=mock_json,
         )
         client = PutApi()
         response = client.execute(request_body=request_body)
@@ -254,15 +268,18 @@ class TestPatchApi:
         }
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
-            method=PatchApi.method, match_json=request_body.to_dict(), json=mock_json
+            method=PatchApi.method,
+            match_json=quickapi.DictSerializable.to_dict(request_body),
+            json=mock_json,
         )
         client = PatchApi()
         response = client.execute(request_body=request_body)
+        print(response.body)
         assert response.body == cattrs.structure(mock_json, ResponseBody)
 
 
 @attrs.define
-class AuthResponseBody(quickapi.BaseResponseBody):
+class AuthResponseBody:
     authenticated: bool
     user: str
 

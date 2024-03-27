@@ -26,6 +26,16 @@ class ResponseSerializationError(QuickApiException):
         super().__init__(message)
 
 
+class RequestSerializationError(QuickApiException):
+    """The request was not serializable to the configured type."""
+
+    def __init__(self, expected_type: str):
+        message = (
+            f"HTTP request params/body did not match expected type `{expected_type}`."
+        )
+        super().__init__(message)
+
+
 class MissingDependencyError(QuickApiException):
     """Trying to use an optional dependency without installing it first."""
 

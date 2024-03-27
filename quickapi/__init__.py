@@ -1,17 +1,15 @@
-from contextlib import suppress
-
 from .client import (  # noqa: F401
     BaseApi,
     BaseApiMethod,
-    BaseRequestBody,
-    BaseRequestParams,
-    BaseResponseBody,
+)
+from .exceptions import (  # noqa: F401
     ClientSetupError,
     HTTPError,
     ResponseSerializationError,
 )
-from .exceptions import QuickApiException  # noqa: F401
-from .http_client import BaseHttpClient, HTTPxClient  # noqa: F401
+from .http_client import BaseHttpClient, HTTPxClient, RequestsClient  # noqa: F401
 
-with suppress(ImportError):
-    from .http_client import RequestsClient  # noqa: F401
+# TODO: should we check optional dep before import?
+from .serializers import (  # noqa: F401
+    DictSerializable,
+)
