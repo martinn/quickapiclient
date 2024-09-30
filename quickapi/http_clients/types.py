@@ -2,13 +2,18 @@ from enum import Enum
 from typing import TypeAlias
 
 try:
+    import aiohttp
     import httpx
     import requests
 except ImportError: ...
 
 # TODO: Fix types
-BaseHttpClientAuth: TypeAlias = "httpx.Auth | requests.auth.AuthBase | object | None"
-BaseHttpClientResponse: TypeAlias = "httpx.Response | requests.Response"
+BaseHttpClientAuth: TypeAlias = (
+    "httpx.Auth | requests.auth.AuthBase | aiohttp.BasicAuth | object | None"
+)
+BaseHttpClientResponse: TypeAlias = (
+    "httpx.Response | requests.Response | aiohttp.ClientResponse"
+)
 
 
 class BaseHttpMethod(str, Enum):
