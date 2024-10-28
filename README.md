@@ -105,7 +105,12 @@ It's still early development but so far we have support for:
 You can easily install this using `pip` or your favourite package manager:
 
 ```console
-pip install quickapiclient[attrs|pydantic|msgspec|requests]
+pip install quickapiclient
+# Or with optional extras (choose from the list below)
+pip install quickapiclient[attrs,pydantic,msgspec,requests]
+# Or if using poetry
+poetry add quickapiclient
+poetry add quickapiclient[attrs,pydantic,msgspec,requests]
 ```
 
 ## More examples
