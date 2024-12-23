@@ -1,6 +1,6 @@
 [project]
 name = "quickapiclient"
-version = "0.5.0"
+version = "0.5.1"
 description = "Create fully typed declarative API clients quickly and easily. "
 authors = [{ name = "Martin", email = "martinn@users.noreply.github.com" }]
 readme = "README.md"
