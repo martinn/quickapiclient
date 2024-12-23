@@ -67,7 +67,7 @@ testpaths = ["tests"]
 target-version = "py310"
 line-length = 88
 fix = true
-select = [
+lint.select = [
     # flake8-2020
     "YTT",
     # flake8-bandit
@@ -100,7 +100,7 @@ select = [
     # tryceratops
     "TRY",
 ]
-ignore = [
+lint.ignore = [
     # LineTooLong
     "E501",
     # DoNotAssignLambda
@@ -125,7 +125,7 @@ branch = true
 source = ["src/quickapi"]
 
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
 
 [tool.deptry]
