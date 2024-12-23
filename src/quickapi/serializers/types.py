@@ -7,7 +7,8 @@ try:
     import attrs
     import msgspec
     import pydantic
-except ImportError: ...
+except ImportError:
+    ...
 
 DictSerializableT: TypeAlias = "dict | DataclassInstance | attrs.AttrsInstance | pydantic.BaseModel | msgspec.Struct"
 FromDictSerializableT = TypeVar("FromDictSerializableT")

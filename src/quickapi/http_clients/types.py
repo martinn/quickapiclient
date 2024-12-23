@@ -4,7 +4,8 @@ from typing import TypeAlias
 try:
     import httpx
     import requests
-except ImportError: ...
+except ImportError:
+    ...
 
 # TODO: Fix types
 BaseHttpClientAuth: TypeAlias = "httpx.Auth | requests.auth.AuthBase | object | None"

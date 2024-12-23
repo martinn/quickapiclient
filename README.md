@@ -111,6 +111,9 @@ pip install quickapiclient[attrs,pydantic,msgspec,requests]
 # Or if using poetry
 poetry add quickapiclient
 poetry add quickapiclient[attrs,pydantic,msgspec,requests]
+# Or if using uv
+uv add quickapiclient
+uv add quickapiclient[attrs,pydantic,msgspec,requests]
 ```
 
 ## More examples
