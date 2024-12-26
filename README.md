@@ -288,13 +288,14 @@ request_body = RequestBody(required_input="dummy")
 
 try:
     response = client.submit_fact(request_body=request_body)
-except quickapi.HTTPError as e:
+except quickapi.HandledHTTPError as e:
     match e.value.status_code:
         case 401:
             assert isinstance(e.value.body, ResponseError401)
             print(f"Received {e.value.body.status} with {e.value.body.message}")
         case _:
-            print("Unhandled error occured.")
+except quickapi.HTTPError as e:
+    print("Unhandled error occured.")
 ```
 
 </details>

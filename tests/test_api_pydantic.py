@@ -91,11 +91,10 @@ class TestGetPydanticApi:
         )
 
         client = PostPydanticApi()
-        with pytest.raises(quickapi.HTTPError) as e:
+        with pytest.raises(quickapi.HandledHTTPError) as e:
             client.execute()
 
         assert e.value.status_code == 401
-        assert e.value.handled is True
         assert e.value.body == ResponseError401(
             status="Failure", message="Unauthorized"
         )

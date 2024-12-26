@@ -5,6 +5,7 @@ from quickapi.exceptions import (
     ApiSetupError,
     DictDeserializationError,
     DictSerializationError,
+    HandledHTTPError,
     HTTPError,
     RequestSerializationError,
     ResponseSerializationError,
@@ -212,7 +213,24 @@ class BaseApi(Generic[ResponseBodyT]):
             params=request_params,
             json=request_body,
         )
-        self._raise_for_errors(client_response)
+        try:
+            self.http_client.raise_for_errors(
+                client_response,
+            )
+        except HTTPError as e:
+            klass = self.response_errors.get(client_response.status_code)
+
+            if not klass:
+                raise
+
+            raise HandledHTTPError(
+                client_response,
+                status_code=client_response.status_code,
+                body=self._parse_response_error(
+                    klass,
+                    client_response.json(),
+                ),
+            ) from e
 
         body = self._parse_response_body(
             klass=self._response_body_cls, body=client_response.json()
@@ -220,35 +238,6 @@ class BaseApi(Generic[ResponseBodyT]):
         self._response = BaseResponse(client_response=client_response, body=body)
 
         return self._response
-
-    def _raise_for_errors(self, client_response: BaseHttpClientResponse) -> None:
-        match client_response.status_code:
-            case success if success in [200, 201]:
-                return
-            case _:
-                klass = (
-                    self.response_errors.get(client_response.status_code)
-                    if self.response_errors
-                    else None
-                )
-
-                if not klass:
-                    raise HTTPError(
-                        client_response,
-                        status_code=client_response.status_code,
-                        body=client_response.text,
-                        handled=False,
-                    )
-
-                raise HTTPError(
-                    client_response,
-                    status_code=client_response.status_code,
-                    body=self._parse_response_error(
-                        klass=klass,
-                        body=client_response.json(),
-                    ),
-                    handled=True,
-                )
 
     def _parse_request_params(self, params: "DictSerializableT | None") -> dict | None:
         try:
