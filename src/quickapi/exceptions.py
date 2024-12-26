@@ -33,20 +33,35 @@ class HTTPError(QuickApiException):
     """The response received a non `200` response status code."""
 
     status_code: int
-    body: "DictSerializableT | str"
-    handled: bool = False
+    body: "str"
 
     def __init__(
         self,
         client_response: "BaseHttpClientResponse",
         status_code: int,
-        body: "DictSerializableT | str",
-        handled: bool = False,
+        body: "str",
     ):
         message = f"HTTP request received a non `HTTP 200 (OK)` response. The response status code was `{status_code}`."
         self.status_code = status_code
         self.body = body
-        self.handled = handled
+        super().__init__(message)
+
+
+class HandledHTTPError(QuickApiException):
+    """The response received a non `200` response status code that we can handle."""
+
+    status_code: int
+    body: "DictSerializableT"
+
+    def __init__(
+        self,
+        client_response: "BaseHttpClientResponse",
+        status_code: int,
+        body: "DictSerializableT",
+    ):
+        message = f"HTTP request received a non `HTTP 200 (OK)` response. The response status code was `{status_code}`."
+        self.status_code = status_code
+        self.body = body
         super().__init__(message)
 
 

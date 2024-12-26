@@ -10,6 +10,7 @@ from quickapi.exceptions import (  # noqa: F401
     ClientSetupError,
     DictDeserializationError,
     DictSerializationError,
+    HandledHTTPError,
     HTTPError,
     MissingDependencyError,
     RequestSerializationError,

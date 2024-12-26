@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
+from quickapi.exceptions import HTTPError
 from quickapi.http_clients.types import (
     BaseHttpClientAuth,
     BaseHttpClientResponse,
@@ -8,7 +10,8 @@ from quickapi.http_clients.types import (
 
 
 class BaseHttpClient(ABC):
-    """Base interface for all HTTP clients.
+    """
+    Base interface for all HTTP clients.
 
     You can create your own HTTP client by subclassing this class.
     """
@@ -102,3 +105,18 @@ class BaseHttpClient(ABC):
                 raise NotImplementedError(f"Method {method} not implemented.")
 
         return client_response
+
+    def raise_for_errors(
+        self,
+        client_response: BaseHttpClientResponse,
+        response_success_codes: Sequence[int] = (200, 201),
+    ) -> None:
+        match client_response.status_code:
+            case success if success in response_success_codes:
+                return
+            case _:
+                raise HTTPError(
+                    client_response,
+                    status_code=client_response.status_code,
+                    body=client_response.text,
+                )
