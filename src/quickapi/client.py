@@ -6,6 +6,7 @@ from quickapi.api import USE_DEFAULT, BaseApi, BaseResponse, ResponseBodyT
 from quickapi.exceptions import ClientSetupError
 from quickapi.http_clients import BaseHttpClient, BaseHttpClientAuth, HTTPxClient
 from quickapi.serializers import DictSerializableT
+from quickapi.serializers.base import ConfigurableSerializer
 
 
 class BaseClient:
@@ -25,6 +26,11 @@ class BaseClient:
         http_client: Optional HTTP client to be used across all API endpoints
             if not using the default (HTTPx). Or if wanting to customize the
             default client.
+        default_serializer: Optional (de)serializer to be used for all API
+            endpoints under this client. This can be a specific serializer class
+            (e.g., `DataclassSerializer`) or deserializer class (e.g., `DataclassDeserializer`).
+            If set, this will be prioritized for (de)serializing request/response
+            bodies. An API endpoint can override this setting.
 
     Raises:
         ClientSetupError: If the class attributes are not correctly defined.
@@ -64,16 +70,19 @@ class BaseClient:
     base_url: str | object | None = None
     auth: BaseHttpClientAuth = None
     http_client: BaseHttpClient | None = HTTPxClient()
+    default_serializer: ConfigurableSerializer | None = None
 
     def __init__(
         self,
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
         base_url: str | object = USE_DEFAULT,
+        default_serializer: ConfigurableSerializer | None = None,
     ):
         self.http_client = http_client or self.http_client
         self.auth = auth if auth != USE_DEFAULT else self.auth
         self.base_url = base_url if base_url != USE_DEFAULT else self.base_url
+        self.default_serializer = default_serializer or self.default_serializer
 
 
 class ApiEndpoint(Generic[ResponseBodyT]):
@@ -115,6 +124,7 @@ class ApiEndpoint(Generic[ResponseBodyT]):
                 base_url=instance.base_url,
                 http_client=instance.http_client,
                 auth=instance.auth,
+                default_serializer=instance.default_serializer,
             )
 
         return self

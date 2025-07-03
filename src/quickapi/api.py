@@ -16,8 +16,15 @@ from quickapi.http_clients import (
     BaseHttpClientResponse,
     HTTPxClient,
 )
+import inspect
+import typing  # For isinstance checks against generic types
 from quickapi.http_clients.types import BaseHttpMethod
 from quickapi.serializers import DictSerializable, DictSerializableT
+from quickapi.serializers.base import (
+    BaseDeserializer,
+    BaseSerializer,
+    ConfigurableSerializer,
+)
 from quickapi.serializers.types import FromDictSerializableT
 
 USE_DEFAULT = object()
@@ -57,6 +64,12 @@ class BaseApi(Generic[ResponseBodyT]):
             default (HTTPx). Or if wanting to customize the default client.
         auth: Optional authentication to be used. Can be any class supported
             by the HTTP client.
+        default_serializer: Optional (de)serializer to be used for this specific
+            API endpoint. This can be a specific serializer class
+            (e.g., `DataclassSerializer`) or deserializer class (e.g., `DataclassDeserializer`).
+            If set, this will be prioritized for (de)serializing request/response
+            bodies. This setting, if provided, overrides any `default_serializer`
+            set on the `BaseClient`.
 
     Raises:
         ApiSetupError: If the class attributes are not correctly defined.
@@ -97,6 +110,7 @@ class BaseApi(Generic[ResponseBodyT]):
     response_body: type[ResponseBodyT]
     response_errors: ClassVar[dict[int, type]] = {}
     http_client: BaseHttpClient = HTTPxClient()
+    default_serializer: ConfigurableSerializer | None = None
 
     _request_params: "DictSerializableT | None" = None
     _request_body: "DictSerializableT | None" = None
@@ -147,8 +161,16 @@ class BaseApi(Generic[ResponseBodyT]):
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
         base_url: str | object | None = None,
+        default_serializer: ConfigurableSerializer | None = None,
     ) -> None:
-        self._load_overrides(request_params, request_body, http_client, auth, base_url)
+        self._load_overrides(
+            request_params,
+            request_body,
+            http_client,
+            auth,
+            base_url,
+            default_serializer,
+        )
 
     def _load_overrides(
         self,
@@ -157,11 +179,14 @@ class BaseApi(Generic[ResponseBodyT]):
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
         base_url: str | object | None = None,
+        default_serializer: ConfigurableSerializer | None = None,
     ) -> None:
         self._request_params = request_params or self._request_params
         self._request_body = request_body or self._request_body
         self.http_client = http_client or self.http_client
         self.auth = auth if auth != USE_DEFAULT else self.auth
+        # API's own default_serializer (class var) takes precedence over client-passed one
+        self.default_serializer = self.default_serializer or default_serializer
         self.url = (
             f"{base_url}{self.url}"
             if base_url and base_url != USE_DEFAULT
@@ -240,16 +265,38 @@ class BaseApi(Generic[ResponseBodyT]):
         return self._response
 
     def _parse_request_params(self, params: "DictSerializableT | None") -> dict | None:
+        preferred_deserializer = (
+            self.default_serializer
+            if inspect.isclass(self.default_serializer) and issubclass(self.default_serializer, BaseDeserializer)
+            else None
+        )
         try:
-            params = DictSerializable.to_dict(params) if params else {}
+            params = (
+                DictSerializable.to_dict(
+                    params, preferred_deserializer=preferred_deserializer
+                )
+                if params
+                else {}
+            )
         except DictDeserializationError as e:
             raise RequestSerializationError(expected_type=e.expected_type) from e
         else:
             return params
 
     def _parse_request_body(self, body: "DictSerializableT | None") -> dict | None:
+        preferred_deserializer = (
+            self.default_serializer
+            if inspect.isclass(self.default_serializer) and issubclass(self.default_serializer, BaseDeserializer)
+            else None
+        )
         try:
-            body = DictSerializable.to_dict(body) if body else {}
+            body = (
+                DictSerializable.to_dict(
+                    body, preferred_deserializer=preferred_deserializer
+                )
+                if body
+                else {}
+            )
         except DictDeserializationError as e:
             raise RequestSerializationError(expected_type=e.expected_type) from e
         else:
@@ -258,15 +305,29 @@ class BaseApi(Generic[ResponseBodyT]):
     def _parse_response_body(
         self, klass: type[ResponseBodyT], body: dict
     ) -> ResponseBodyT:
+        preferred_serializer = (
+            self.default_serializer
+            if inspect.isclass(self.default_serializer) and issubclass(self.default_serializer, BaseSerializer)
+            else None
+        )
         try:
-            return DictSerializable.from_dict(klass, body)
+            return DictSerializable.from_dict(
+                klass, body, preferred_serializer=preferred_serializer
+            )
         except DictSerializationError as e:
             raise ResponseSerializationError(expected_type=e.expected_type) from e
 
     def _parse_response_error(
         self, klass: type[FromDictSerializableT], body: dict
     ) -> Any:
+        preferred_serializer = (
+            self.default_serializer
+            if inspect.isclass(self.default_serializer) and issubclass(self.default_serializer, BaseSerializer)
+            else None
+        )
         try:
-            return DictSerializable.from_dict(klass, body)
+            return DictSerializable.from_dict(
+                klass, body, preferred_serializer=preferred_serializer
+            )
         except DictSerializationError as e:
             raise ResponseSerializationError(expected_type=e.expected_type) from e

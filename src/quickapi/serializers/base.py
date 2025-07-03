@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, Type, Union
 
 from quickapi.exceptions import DictDeserializationError, DictSerializationError
 from quickapi.serializers.attrs import AttrsDeserializer, AttrsSerializer
@@ -29,6 +29,9 @@ class BaseDeserializer(Protocol):
     @classmethod
     def to_dict(cls, instance: DictSerializableT) -> dict | None:
         raise NotImplementedError
+
+
+ConfigurableSerializer = Union[Type[BaseSerializer], Type[BaseDeserializer]]
 
 
 class DictSerializable:
@@ -62,15 +65,44 @@ class DictSerializable:
 
     @classmethod
     def from_dict(
-        cls, klass: type[FromDictSerializableT], values: dict
+        cls,
+        klass: type[FromDictSerializableT],
+        values: dict,
+        preferred_serializer: Type[BaseSerializer] | None = None,
     ) -> FromDictSerializableT:
+        if preferred_serializer:
+            if preferred_serializer.can_apply(klass):
+                try:
+                    return preferred_serializer.from_dict(klass, values)
+                except Exception as e:
+                    # If preferred serializer is chosen but fails, raise immediately
+                    raise DictSerializationError(
+                        expected_type=klass.__name__, specific_serializer=preferred_serializer
+                    ) from e
+            # If preferred_serializer cannot apply, fall through to iterating available ones
+
         for serializer in cls.serializers:
             if serializer.can_apply(klass):
                 return serializer.from_dict(klass, values)
         raise DictSerializationError(expected_type=klass.__name__)
 
     @classmethod
-    def to_dict(cls, instance: DictSerializableT) -> dict | None:
+    def to_dict(
+        cls,
+        instance: DictSerializableT,
+        preferred_deserializer: Type[BaseDeserializer] | None = None,
+    ) -> dict | None:
+        if preferred_deserializer:
+            if preferred_deserializer.can_apply(instance):
+                try:
+                    return preferred_deserializer.to_dict(instance)
+                except Exception as e:
+                    # If preferred deserializer is chosen but fails, raise immediately
+                    raise DictDeserializationError(
+                        expected_type=str(type(instance)), specific_deserializer=preferred_deserializer
+                    ) from e
+            # If preferred_deserializer cannot apply, fall through to iterating available ones
+
         for deserializer in cls.deserializers:
             if deserializer.can_apply(instance):
                 return deserializer.to_dict(instance)

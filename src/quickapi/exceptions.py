@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from quickapi.http_clients.types import BaseHttpClientResponse
@@ -69,20 +69,30 @@ class DictSerializationError(QuickApiException):
     """Dict serialization failed."""
 
     expected_type = ""
+    specific_serializer: Any | None = None
 
-    def __init__(self, expected_type: str):
+    def __init__(self, expected_type: str, specific_serializer: Any = None):
         self.expected_type = expected_type
-        super().__init__(self.__doc__)
+        self.specific_serializer = specific_serializer
+        message = f"Could not serialize to {expected_type}"
+        if specific_serializer:
+            message += f" using {specific_serializer.__name__}"
+        super().__init__(message)
 
 
 class DictDeserializationError(QuickApiException):
     """Dict deserialization failed."""
 
     expected_type = ""
+    specific_deserializer: Any | None = None
 
-    def __init__(self, expected_type: str):
+    def __init__(self, expected_type: str, specific_deserializer: Any = None):
         self.expected_type = expected_type
-        super().__init__(self.__doc__)
+        self.specific_deserializer = specific_deserializer
+        message = f"Could not deserialize {expected_type} to dict"
+        if specific_deserializer:
+            message += f" using {specific_deserializer.__name__}"
+        super().__init__(message)
 
 
 class ResponseSerializationError(QuickApiException):
