@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Any
 
 from quickapi.exceptions import DictSerializationError
 from quickapi.serializers.types import FromDictSerializableT
@@ -10,9 +10,6 @@ except ImportError:
     attrs_installed = False
 else:
     attrs_installed = True
-
-if TYPE_CHECKING:
-    from attrs import AttrsInstance
 
 
 class AttrsSerializer:
@@ -35,5 +32,5 @@ class AttrsSerializer:
             raise DictSerializationError(expected_type=klass.__name__) from e
 
     @classmethod
-    def to_dict(cls, instance: AttrsInstance) -> dict | None:
+    def to_dict(cls, instance: Any) -> dict | None:
         return attrs.asdict(instance)

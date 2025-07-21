@@ -1,10 +1,10 @@
 import dataclasses
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import chili
 
 if TYPE_CHECKING:
-    from _typeshed import DataclassInstance
+    pass
 
 from quickapi.exceptions import DictSerializationError
 from quickapi.serializers.types import FromDictSerializableT
@@ -30,5 +30,5 @@ class DataclassSerializer:
             raise DictSerializationError(expected_type=klass.__name__) from e
 
     @classmethod
-    def to_dict(cls, instance: DataclassInstance) -> dict | None:
+    def to_dict(cls, instance: Any) -> dict | None:
         return dataclasses.asdict(instance)
