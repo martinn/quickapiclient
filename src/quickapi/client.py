@@ -6,9 +6,7 @@ from quickapi.api import USE_DEFAULT, BaseApi, BaseResponse, ResponseBodyT
 from quickapi.exceptions import ClientSetupError
 from quickapi.http_clients import BaseHttpClient, BaseHttpClientAuth, HTTPxClient
 from quickapi.serializers import (
-    BaseDeserializer,
     BaseSerializer,
-    DataclassDeserializer,
     DataclassSerializer,
     DictSerializableT,
 )
@@ -71,7 +69,6 @@ class BaseClient:
     auth: BaseHttpClientAuth = None
     http_client: BaseHttpClient | None = HTTPxClient()
     serializer: type[BaseSerializer] | None = DataclassSerializer
-    deserializer: type[BaseDeserializer] | None = DataclassDeserializer
 
     def __init__(
         self,
@@ -79,13 +76,11 @@ class BaseClient:
         auth: BaseHttpClientAuth = USE_DEFAULT,
         base_url: str | object = USE_DEFAULT,
         serializer: type[BaseSerializer] | None = None,
-        deserializer: type[BaseDeserializer] | None = None,
     ):
         self.http_client = http_client or self.http_client
         self.auth = auth if auth != USE_DEFAULT else self.auth
         self.base_url = base_url if base_url != USE_DEFAULT else self.base_url
         self.serializer = serializer or self.serializer
-        self.deserializer = deserializer or self.deserializer
 
 
 class ApiEndpoint(Generic[ResponseBodyT]):
@@ -128,7 +123,6 @@ class ApiEndpoint(Generic[ResponseBodyT]):
                 http_client=instance.http_client,
                 auth=instance.auth,
                 serializer=instance.serializer,
-                deserializer=instance.deserializer,
             )
 
         return self

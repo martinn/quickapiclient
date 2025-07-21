@@ -10,8 +10,6 @@ class BaseSerializer(Protocol):
     ) -> FromDictSerializableT:
         raise NotImplementedError
 
-
-class BaseDeserializer(Protocol):
     @classmethod
     def to_dict(cls, instance: DictSerializableT) -> dict | None:
         raise NotImplementedError

@@ -1,7 +1,7 @@
 from typing import Any
 
 from quickapi.exceptions import DictSerializationError
-from quickapi.serializers.types import FromDictSerializableT
+from quickapi.serializers.types import DictSerializableT, FromDictSerializableT
 
 try:
     import msgspec
@@ -13,7 +13,7 @@ else:
 
 class MsgspecSerializer:
     """
-    Convert from dict to msgspec.Struct.
+    Convert from dict to msgspec.Struct and vice-versa.
     """
 
     @classmethod
@@ -29,14 +29,6 @@ class MsgspecSerializer:
         except msgspec.ValidationError as e:
             raise DictSerializationError(expected_type=klass.__name__) from e
 
-
-class MsgspecDeserializer:
-    """Convert from msgspec.Struct to dict."""
-
     @classmethod
-    def can_apply(cls, instance: "msgspec.Struct") -> bool:
-        return msgspec_installed and isinstance(instance, msgspec.Struct)
-
-    @classmethod
-    def to_dict(cls, instance: "msgspec.Struct") -> Any:
+    def to_dict(cls, instance: DictSerializableT) -> Any:
         return msgspec.to_builtins(instance, builtin_types=[dict])

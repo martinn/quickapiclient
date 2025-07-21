@@ -1,5 +1,5 @@
 from quickapi.exceptions import DictSerializationError
-from quickapi.serializers.types import FromDictSerializableT
+from quickapi.serializers.types import DictSerializableT, FromDictSerializableT
 
 try:
     import pydantic
@@ -11,7 +11,7 @@ else:
 
 class PydanticSerializer:
     """
-    Convert from dict to pydantic model.
+    Convert from dict to pydantic model and vice-versa.
     """
 
     @classmethod
@@ -28,14 +28,6 @@ class PydanticSerializer:
         except pydantic.ValidationError as e:
             raise DictSerializationError(expected_type=klass.__name__) from e
 
-
-class PydanticDeserializer:
-    """Convert from pydantic model to dict."""
-
     @classmethod
-    def can_apply(cls, instance: "pydantic.BaseModel") -> bool:
-        return pydantic_installed and isinstance(instance, pydantic.BaseModel)
-
-    @classmethod
-    def to_dict(cls, instance: "pydantic.BaseModel") -> dict | None:
+    def to_dict(cls, instance: DictSerializableT) -> dict | None:
         return instance.model_dump()

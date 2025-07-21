@@ -17,8 +17,8 @@ from quickapi.http_clients import (
     HTTPxClient,
 )
 from quickapi.http_clients.types import BaseHttpMethod
-from quickapi.serializers.base import BaseDeserializer, BaseSerializer
-from quickapi.serializers.dataclass import DataclassDeserializer, DataclassSerializer
+from quickapi.serializers.base import BaseSerializer
+from quickapi.serializers.dataclass import DataclassSerializer
 from quickapi.serializers.types import DictSerializableT, FromDictSerializableT
 
 USE_DEFAULT = object()
@@ -100,7 +100,6 @@ class BaseApi(Generic[ResponseBodyT]):
     http_client: BaseHttpClient = HTTPxClient()
     # TODO: Merge into a single class
     serializer: type[BaseSerializer] | None = DataclassSerializer
-    deserializer: type[BaseDeserializer] | None = DataclassDeserializer
 
     _request_params: "DictSerializableT | None" = None
     _request_body: "DictSerializableT | None" = None
@@ -152,7 +151,6 @@ class BaseApi(Generic[ResponseBodyT]):
         auth: BaseHttpClientAuth = USE_DEFAULT,
         base_url: str | object | None = None,
         serializer: type[BaseSerializer] | None = None,
-        deserializer: type[BaseDeserializer] | None = None,
     ) -> None:
         self._load_overrides(
             request_params=request_params,
@@ -161,7 +159,7 @@ class BaseApi(Generic[ResponseBodyT]):
             auth=auth,
             base_url=base_url,
             serializer=serializer,
-            deserializer=deserializer,
+            
         )
 
     def _load_overrides(
@@ -172,7 +170,6 @@ class BaseApi(Generic[ResponseBodyT]):
         auth: BaseHttpClientAuth = USE_DEFAULT,
         base_url: str | object | None = None,
         serializer: type[BaseSerializer] | None = None,
-        deserializer: type[BaseDeserializer] | None = None,
     ) -> None:
         self._request_params = request_params or self._request_params
         self._request_body = request_body or self._request_body
@@ -184,7 +181,6 @@ class BaseApi(Generic[ResponseBodyT]):
             else self.url
         )
         self.serializer = serializer or self.serializer
-        self.deserializer = deserializer or self.deserializer
 
     def execute(
         self,
@@ -193,7 +189,6 @@ class BaseApi(Generic[ResponseBodyT]):
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
         serializer: type[BaseSerializer] | None = None,
-        deserializer: type[BaseDeserializer] | None = None,
     ) -> BaseResponse[ResponseBodyT]:
         """
         Validate and execute the API request, then validate and return the typed response.
@@ -228,7 +223,6 @@ class BaseApi(Generic[ResponseBodyT]):
             http_client,
             auth,
             serializer=serializer,
-            deserializer=deserializer,
         )
         request_params = self._parse_request_params(self._request_params)
         request_body = self._parse_request_body(self._request_body)
@@ -267,20 +261,20 @@ class BaseApi(Generic[ResponseBodyT]):
         return self._response
 
     def _parse_request_params(self, params: "DictSerializableT | None") -> dict | None:
-        if not self.deserializer:
-            raise ApiSetupError(attribute="deserializer")
+        if not self.serializer:
+            raise ApiSetupError(attribute="serializer")
         try:
-            params = self.deserializer.to_dict(params) if params else {}
+            params = self.serializer.to_dict(params) if params else {}
         except DictDeserializationError as e:
             raise RequestSerializationError(expected_type=e.expected_type) from e
         else:
             return params
 
     def _parse_request_body(self, body: "DictSerializableT | None") -> dict | None:
-        if not self.deserializer:
-            raise ApiSetupError(attribute="deserializer")
+        if not self.serializer:
+            raise ApiSetupError(attribute="serializer")
         try:
-            body = self.deserializer.to_dict(body) if body else {}
+            body = self.serializer.to_dict(body) if body else {}
         except DictDeserializationError as e:
             raise RequestSerializationError(expected_type=e.expected_type) from e
         else:
