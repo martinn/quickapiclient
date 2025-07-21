@@ -335,6 +335,7 @@ class ResponseBody:
 
 
 class SubmitApi(quickapi.BaseApi[ResponseBody]):
+    serializer = quickapi.AttrsSerializer
     url = "/submit"
     method = quickapi.BaseHttpMethod.POST
     request_body = RequestBody
@@ -387,6 +388,7 @@ class ResponseBody(pydantic.BaseModel):
 
 
 class SubmitApi(quickapi.BaseApi[ResponseBody]):
+    serializer = quickapi.PydanticSerializer
     url = "/submit"
     method = quickapi.BaseHttpMethod.POST
     request_body = RequestBody
@@ -441,6 +443,7 @@ class ResponseBody(msgspec.Struct):
 
 
 class SubmitApi(quickapi.BaseApi[ResponseBody]):
+    serializer = quickapi.MsgspecSerializer
     url = "/submit"
     method = quickapi.BaseHttpMethod.POST
     request_body = RequestBody

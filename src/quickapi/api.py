@@ -58,6 +58,8 @@ class BaseApi(Generic[ResponseBodyT]):
             default (HTTPx). Or if wanting to customize the default client.
         auth: Optional authentication to be used. Can be any class supported
             by the HTTP client.
+        serializer: Optional serializer to be used for both serializing requests
+            and deserializing responses. Defaults to `DataclassSerializer`.
 
     Raises:
         ApiSetupError: If the class attributes are not correctly defined.
@@ -159,7 +161,6 @@ class BaseApi(Generic[ResponseBodyT]):
             auth=auth,
             base_url=base_url,
             serializer=serializer,
-            
         )
 
     def _load_overrides(

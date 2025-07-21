@@ -29,6 +29,8 @@ class BaseClient:
         http_client: Optional HTTP client to be used across all API endpoints
             if not using the default (HTTPx). Or if wanting to customize the
             default client.
+        serializer: Optional serializer to be used for both serializing requests
+            and deserializing responses. Defaults to `DataclassSerializer`.
 
     Raises:
         ClientSetupError: If the class attributes are not correctly defined.
