@@ -22,6 +22,10 @@ from quickapi.http_clients import (  # noqa: F401
     HTTPxClient,
     RequestsClient,
 )
-from quickapi.serializers import (  # noqa: F401
-    DictSerializable,
+from quickapi.serializers import (
+    AttrsSerializer,  # noqa: F401
+    BaseSerializer,  # noqa: F401
+    DataclassSerializer,  # noqa: F401
+    MsgspecSerializer,  # noqa: F401
+    PydanticSerializer,  # noqa: F401
 )

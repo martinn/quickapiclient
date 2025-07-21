@@ -75,16 +75,17 @@ class TestExampleClient:
 
     def test_api_client_submit(self, httpx_mock: HTTPXMock):
         mock_json = {"success": True, "message": "Success"}
+        request_body = PostRequestBody(some_data="some data")
         httpx_mock.add_response(
             url=f"{ExampleClient.base_url}{ExampleClient.submit.url}",
             match_headers={"X-Api-Key": "my_api_key"},
+            match_json=PostDataclassApi.serializer.to_dict(request_body),
             json=mock_json,
         )
 
         client = ExampleClient(
             auth=httpx_auth.HeaderApiKey(header_name="X-Api-Key", api_key="my_api_key")
         )
-        request_body = PostRequestBody(some_data="some data")
         response = client.submit(request_body=request_body)
 
         assert response.body.success is True

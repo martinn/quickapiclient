@@ -77,7 +77,7 @@ class TestGetDataclassApi:
         request_body = RequestBody(some_data="some data")
         httpx_mock.add_response(
             url=f"{PostDataclassApi.url}?max_length={request_params.max_length}&limit={request_params.limit}",
-            match_json={"some_data": request_body.some_data},
+            match_json=PostDataclassApi.serializer.to_dict(request_body),
             json=mock_json,
         )
 

@@ -1,3 +1,5 @@
+from typing import Any
+
 from quickapi.exceptions import DictSerializationError
 from quickapi.serializers.types import FromDictSerializableT
 
@@ -12,7 +14,7 @@ else:
 
 class AttrsSerializer:
     """
-    Convert from dict to attrs model.
+    Convert from dict to attrs model and vice-versa.
 
     """
 
@@ -29,16 +31,6 @@ class AttrsSerializer:
         except cattrs.ClassValidationError as e:
             raise DictSerializationError(expected_type=klass.__name__) from e
 
-
-class AttrsDeserializer:
-    """
-    Convert from attrs model to dict.
-    """
-
     @classmethod
-    def can_apply(cls, instance: "attrs.AttrsInstance") -> bool:
-        return attrs_installed and attrs.has(type(instance))
-
-    @classmethod
-    def to_dict(cls, instance: "attrs.AttrsInstance") -> dict | None:
+    def to_dict(cls, instance: Any) -> dict | None:
         return attrs.asdict(instance)

@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from pytest_httpx import HTTPXMock
 
 import quickapi
+from quickapi.serializers.pydantic import PydanticSerializer
 
 
 class Fact(BaseModel):
@@ -37,6 +38,7 @@ class PostPydanticApi(quickapi.BaseApi[ResponseBody]):
     request_body = RequestBody
     response_body = ResponseBody
     response_errors = {401: ResponseError401}  # noqa: RUF012
+    serializer = PydanticSerializer
 
 
 class TestGetPydanticApi:
@@ -71,7 +73,7 @@ class TestGetPydanticApi:
         request_body = RequestBody(some_data="some data")
         httpx_mock.add_response(
             url=f"{PostPydanticApi.url}?max_length={request_params.max_length}&limit={request_params.limit}",
-            match_json={"some_data": request_body.some_data},
+            match_json=PydanticSerializer.to_dict(request_body),
             json=mock_json,
         )
 
