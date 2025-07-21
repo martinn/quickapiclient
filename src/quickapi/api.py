@@ -100,10 +100,7 @@ class BaseApi(Generic[ResponseBodyT]):
     response_body: type[ResponseBodyT]
     response_errors: ClassVar[dict[int, type]] = {}
     http_client: BaseHttpClient = HTTPxClient()
-    # TODO: Merge into a single class
-    serializer: type[BaseSerializer] | None = cast(
-        type[BaseSerializer], DataclassSerializer
-    )
+    serializer: type[BaseSerializer] = cast(type[BaseSerializer], DataclassSerializer)
 
     _request_params: "DictSerializableT | None" = None
     _request_body: "DictSerializableT | None" = None
@@ -138,6 +135,9 @@ class BaseApi(Generic[ResponseBodyT]):
             isinstance(cls.http_client, BaseHttpClient)
         ):
             raise ApiSetupError(attribute="http_client")
+
+        if not cls.serializer:
+            raise ApiSetupError(attribute="serializer")
 
         if getattr(cls, "__orig_bases__", None) is not None:
             response_body_generic_type = get_args(cls.__orig_bases__[0])[0]  # type: ignore [attr-defined]
@@ -209,6 +209,7 @@ class BaseApi(Generic[ResponseBodyT]):
                 `BaseApi.request_body`.
             http_client: Optional HTTP client to be used for sending the request.
             auth: Optional authentication to be used for the request.
+            serializer: Optional serializer to be used for the request.
 
         Returns:
             Response object containing the client response and the parsed response body.
@@ -264,8 +265,6 @@ class BaseApi(Generic[ResponseBodyT]):
         return self._response
 
     def _parse_request_params(self, params: "DictSerializableT | None") -> dict | None:
-        if not self.serializer:
-            raise ApiSetupError(attribute="serializer")
         try:
             params = self.serializer.to_dict(params) if params else {}
         except DictDeserializationError as e:
@@ -274,8 +273,6 @@ class BaseApi(Generic[ResponseBodyT]):
             return params
 
     def _parse_request_body(self, body: "DictSerializableT | None") -> dict | None:
-        if not self.serializer:
-            raise ApiSetupError(attribute="serializer")
         try:
             body = self.serializer.to_dict(body) if body else {}
         except DictDeserializationError as e:
@@ -286,8 +283,6 @@ class BaseApi(Generic[ResponseBodyT]):
     def _parse_response_body(
         self, klass: type[ResponseBodyT], body: dict
     ) -> ResponseBodyT:
-        if not self.serializer:
-            raise ApiSetupError(attribute="serializer")
         try:
             return self.serializer.from_dict(klass, body)
         except DictSerializationError as e:
@@ -296,8 +291,6 @@ class BaseApi(Generic[ResponseBodyT]):
     def _parse_response_error(
         self, klass: type[FromDictSerializableT], body: dict
     ) -> Any:
-        if not self.serializer:
-            raise ApiSetupError(attribute="serializer")
         try:
             return self.serializer.from_dict(klass, body)
         except DictSerializationError as e:

@@ -137,6 +137,7 @@ class ApiEndpoint(Generic[ResponseBodyT]):
         request_body: "DictSerializableT | None" = None,
         http_client: BaseHttpClient | None = None,
         auth: BaseHttpClientAuth = USE_DEFAULT,
+        serializer: type[BaseSerializer] | None = None,
     ) -> BaseResponse[ResponseBodyT]:
         if self._api is None:
             raise AttributeError("API endpoint not part of a `BaseClient` instance.")  # noqa: TRY003
@@ -146,6 +147,7 @@ class ApiEndpoint(Generic[ResponseBodyT]):
             request_body=request_body,
             http_client=http_client,
             auth=auth,
+            serializer=serializer,
         )
 
     def __set__(self, instance: BaseClient, value: Any) -> NoReturn:
