@@ -6,6 +6,7 @@ import msgspec
 import pydantic
 import pytest
 
+from quickapi.exceptions import DictDeserializationError, DictSerializationError
 from quickapi.serializers.attrs import AttrsSerializer
 from quickapi.serializers.base import BaseSerializer
 from quickapi.serializers.dataclass import DataclassSerializer
@@ -116,28 +117,27 @@ class TestSerializers:
             serializer_cls.from_dict(type(input_data), self.complex_model) == input_data
         )
 
-    #
-    # @pytest.mark.parametrize(
-    #     "instance",
-    #     [
-    #         object(),
-    #         # All other serializers will require a valid instance to start with
-    #     ],
-    # )
-    # def test_to_dict_with_invalid_input(self, instance):
-    #     with pytest.raises(DictDeserializationError):
-    #         DictSerializable.to_dict(instance)
-    #
-    # @pytest.mark.parametrize(
-    #     "klass, input_data",
-    #     [
-    #         (DataclassComplexModel, invalid_model),
-    #         (AttrsComplexModel, invalid_model),
-    #         (PydanticComplexModel, invalid_model),
-    #         (MsgspecComplexModel, invalid_model),
-    #         (object, invalid_model),
-    #     ],
-    # )
-    # def test_from_dict_with_invalid_input(self, klass, input_data):
-    #     with pytest.raises(DictSerializationError):
-    #         DictSerializable.from_dict(klass, input_data)
+    @pytest.mark.parametrize(
+        "serializer_cls, instance",
+        [
+            (DataclassSerializer, object())
+            # All other serializers will require a valid instance to start with
+        ],
+    )
+    def test_to_dict_with_invalid_input(self, serializer_cls, instance):
+        with pytest.raises(DictDeserializationError):
+            serializer_cls.to_dict(instance)
+
+    @pytest.mark.parametrize(
+        "serializer_cls, klass, input_data",
+        [
+            (DataclassSerializer, DataclassComplexModel, invalid_model),
+            (AttrsSerializer, AttrsComplexModel, invalid_model),
+            (PydanticSerializer, PydanticComplexModel, invalid_model),
+            (MsgspecSerializer, MsgspecComplexModel, invalid_model),
+            (DataclassSerializer, object, invalid_model),
+        ],
+    )
+    def test_from_dict_with_invalid_input(self, serializer_cls, klass, input_data):
+        with pytest.raises(DictSerializationError):
+            serializer_cls.from_dict(klass, input_data)

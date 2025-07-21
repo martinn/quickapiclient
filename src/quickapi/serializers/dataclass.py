@@ -6,7 +6,7 @@ import chili
 if TYPE_CHECKING:
     pass
 
-from quickapi.exceptions import DictSerializationError
+from quickapi.exceptions import DictDeserializationError, DictSerializationError
 from quickapi.serializers.types import FromDictSerializableT
 
 
@@ -26,9 +26,12 @@ class DataclassSerializer:
     ) -> FromDictSerializableT:
         try:
             return chili.decode(values, klass)
-        except ValueError as e:
+        except (ValueError, chili.error.DecoderError) as e:
             raise DictSerializationError(expected_type=klass.__name__) from e
 
     @classmethod
     def to_dict(cls, instance: Any) -> dict | None:
-        return dataclasses.asdict(instance)
+        try:
+            return dataclasses.asdict(instance)
+        except TypeError as e:
+            raise DictDeserializationError(expected_type="DataclassInstance") from e
