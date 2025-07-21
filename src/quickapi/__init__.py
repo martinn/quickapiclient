@@ -22,6 +22,6 @@ from quickapi.http_clients import (  # noqa: F401
     HTTPxClient,
     RequestsClient,
 )
-from quickapi.serializers import (  # noqa: F401
-    DictSerializable,
-)
+# from quickapi.serializers import (
+#     DictSerializable,
+# )

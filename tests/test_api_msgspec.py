@@ -5,6 +5,7 @@ from msgspec import Meta, Struct, field
 from pytest_httpx import HTTPXMock
 
 import quickapi
+from quickapi.serializers import MsgspecDeserializer, MsgspecSerializer
 
 
 class Fact(Struct):
@@ -39,6 +40,8 @@ class PostMsgspecApi(quickapi.BaseApi[ResponseBody]):
     request_body = RequestBody
     response_body = ResponseBody
     response_errors = {401: ResponseError401}  # noqa: RUF012
+    serializer = MsgspecSerializer
+    deserializer = MsgspecDeserializer
 
 
 class TestPostMsgspecApi:

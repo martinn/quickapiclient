@@ -9,6 +9,7 @@ import responses
 from pytest_httpx import HTTPXMock
 
 import quickapi
+from quickapi.serializers import AttrsDeserializer, AttrsSerializer
 
 
 @attrs.define
@@ -44,6 +45,8 @@ class ResponseError401:
 class GetApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
     response_body = ResponseBody
+    serializer = AttrsSerializer
+    deserializer = AttrsDeserializer
 
 
 class TestGetApi:
@@ -83,6 +86,8 @@ class GetWithParamsApi(quickapi.BaseApi[ResponseBody]):
     request_params = RequestParams
     response_body = ResponseBody
     response_errors = {401: ResponseError401}  # noqa: RUF012
+    serializer = AttrsSerializer
+    deserializer = AttrsDeserializer
 
 
 class TestGetWithParamsApi:
@@ -193,6 +198,8 @@ class PostApi(quickapi.BaseApi[ResponseBody]):
     request_params = RequestParams
     request_body = RequestBody
     response_body = ResponseBody
+    serializer = AttrsSerializer
+    deserializer = AttrsDeserializer
 
 
 class TestPostApi:
@@ -201,7 +208,7 @@ class TestPostApi:
         request_body = RequestBody()
         httpx_mock.add_response(
             method=PostApi.method,
-            match_json=quickapi.DictSerializable.to_dict(request_body),
+            match_json=AttrsDeserializer.to_dict(request_body),
             json=mock_json,
         )
         client = PostApi()
@@ -216,7 +223,7 @@ class TestPostApi:
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
             method=PostApi.method,
-            match_json=quickapi.DictSerializable.to_dict(request_body),
+            match_json=AttrsDeserializer.to_dict(request_body),
             json=mock_json,
         )
         client = PostApi()
@@ -239,7 +246,7 @@ class TestPostApiRequestsClient:
             json=mock_json,
             match=[
                 responses.matchers.json_params_matcher(
-                    quickapi.DictSerializable.to_dict(request_body)
+                    AttrsDeserializer.to_dict(request_body)
                 )
             ],
         )
@@ -262,7 +269,7 @@ class TestPostApiRequestsClient:
             json=mock_json,
             match=[
                 responses.matchers.json_params_matcher(
-                    quickapi.DictSerializable.to_dict(request_body)
+                    AttrsDeserializer.to_dict(request_body)
                 )
             ],
         )
@@ -286,7 +293,7 @@ class TestPutApi:
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
             method=PutApi.method,
-            match_json=quickapi.DictSerializable.to_dict(request_body),
+            match_json=AttrsDeserializer.to_dict(request_body),
             json=mock_json,
         )
         client = PutApi()
@@ -307,7 +314,7 @@ class TestPatchApi:
         request_body = RequestBody(some_data="Test body")
         httpx_mock.add_response(
             method=PatchApi.method,
-            match_json=quickapi.DictSerializable.to_dict(request_body),
+            match_json=AttrsDeserializer.to_dict(request_body),
             json=mock_json,
         )
         client = PatchApi()
@@ -326,6 +333,8 @@ class AuthWithBasicApi(quickapi.BaseApi[AuthResponseBody]):
     url = "https://httpbin.org/basic-auth/quickapi/secret"
     auth = httpx.BasicAuth(username="quickapi", password="secret")  # noqa: S106
     response_body = AuthResponseBody
+    serializer = AttrsSerializer
+    deserializer = AttrsDeserializer
 
 
 class TestAuthWithBasicApi:
@@ -357,6 +366,8 @@ class TestAuthWithBasicApi:
 class AuthWithHeaderKeyApi(quickapi.BaseApi[AuthResponseBody]):
     url = "https://httpbin.org/bearer"
     response_body = AuthResponseBody
+    serializer = AttrsSerializer
+    deserializer = AttrsDeserializer
 
 
 class TestAuthWithBearerApi:

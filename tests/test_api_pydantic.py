@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from pytest_httpx import HTTPXMock
 
 import quickapi
+from quickapi.serializers.pydantic import PydanticDeserializer, PydanticSerializer
 
 
 class Fact(BaseModel):
@@ -37,6 +38,8 @@ class PostPydanticApi(quickapi.BaseApi[ResponseBody]):
     request_body = RequestBody
     response_body = ResponseBody
     response_errors = {401: ResponseError401}  # noqa: RUF012
+    serializer = PydanticSerializer
+    deserializer = PydanticDeserializer
 
 
 class TestGetPydanticApi:
