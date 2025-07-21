@@ -1,4 +1,4 @@
-from typing import Any, Generic, NoReturn, overload
+from typing import Any, Generic, NoReturn, cast, overload
 
 from typing_extensions import Self
 
@@ -70,7 +70,9 @@ class BaseClient:
     base_url: str | object | None = None
     auth: BaseHttpClientAuth = None
     http_client: BaseHttpClient | None = HTTPxClient()
-    serializer: type[BaseSerializer] | None = DataclassSerializer
+    serializer: type[BaseSerializer] | None = cast(
+        type[BaseSerializer], DataclassSerializer
+    )
 
     def __init__(
         self,

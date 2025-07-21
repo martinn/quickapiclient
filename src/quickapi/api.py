@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, ClassVar, Generic, TypeVar, get_args
+from typing import Any, ClassVar, Generic, TypeVar, cast, get_args
 
 from quickapi.exceptions import (
     ApiSetupError,
@@ -101,7 +101,9 @@ class BaseApi(Generic[ResponseBodyT]):
     response_errors: ClassVar[dict[int, type]] = {}
     http_client: BaseHttpClient = HTTPxClient()
     # TODO: Merge into a single class
-    serializer: type[BaseSerializer] | None = DataclassSerializer
+    serializer: type[BaseSerializer] | None = cast(
+        type[BaseSerializer], DataclassSerializer
+    )
 
     _request_params: "DictSerializableT | None" = None
     _request_body: "DictSerializableT | None" = None

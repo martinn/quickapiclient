@@ -46,7 +46,6 @@ class GetApi(quickapi.BaseApi[ResponseBody]):
     url = "https://example.com/facts"
     response_body = ResponseBody
     serializer = AttrsSerializer
-    
 
 
 class TestGetApi:
@@ -87,7 +86,6 @@ class GetWithParamsApi(quickapi.BaseApi[ResponseBody]):
     response_body = ResponseBody
     response_errors = {401: ResponseError401}  # noqa: RUF012
     serializer = AttrsSerializer
-    
 
 
 class TestGetWithParamsApi:
@@ -199,7 +197,6 @@ class PostApi(quickapi.BaseApi[ResponseBody]):
     request_body = RequestBody
     response_body = ResponseBody
     serializer = AttrsSerializer
-    
 
 
 class TestPostApi:
@@ -334,7 +331,6 @@ class AuthWithBasicApi(quickapi.BaseApi[AuthResponseBody]):
     auth = httpx.BasicAuth(username="quickapi", password="secret")  # noqa: S106
     response_body = AuthResponseBody
     serializer = AttrsSerializer
-    
 
 
 class TestAuthWithBasicApi:
@@ -367,7 +363,6 @@ class AuthWithHeaderKeyApi(quickapi.BaseApi[AuthResponseBody]):
     url = "https://httpbin.org/bearer"
     response_body = AuthResponseBody
     serializer = AttrsSerializer
-    
 
 
 class TestAuthWithBearerApi:

@@ -23,9 +23,9 @@ from quickapi.http_clients import (  # noqa: F401
     RequestsClient,
 )
 from quickapi.serializers import (
+    AttrsSerializer,  # noqa: F401
     BaseSerializer,  # noqa: F401
     DataclassSerializer,  # noqa: F401
     MsgspecSerializer,  # noqa: F401
-    AttrsSerializer,  # noqa: F401
     PydanticSerializer,  # noqa: F401
 )
