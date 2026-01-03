@@ -1,3 +1,13 @@
+"""
+Legacy tests for BaseApi using attrs serialization.
+
+Note: Most comprehensive tests are now in test_client_parametrized.py which uses
+BaseClient (the recommended approach) and tests across all serialization libraries.
+
+These tests remain as they specifically test BaseApi usage patterns and the
+requests HTTP client integration.
+"""
+
 from base64 import b64encode
 
 import attrs
