@@ -505,7 +505,7 @@ class TestBaseClientErrorHandling:
         self, serializer_models: dict, httpx_mock: HTTPXMock
     ):
         """Test error when response cannot be serialized to expected error type.
-        
+
         Note: Dataclasses don't raise serialization errors for missing fields,
         so this test is skipped for that serializer.
         """
@@ -801,11 +801,11 @@ class TestSerializationErrors:
         self, serializer_models: dict, httpx_mock: HTTPXMock
     ):
         """Test that missing required attribute raises ResponseSerializationError.
-        
+
         Note: Dataclasses don't raise errors for missing fields, so this is skipped.
         """
         models = serializer_models
-        
+
         # Skip for dataclasses as it doesn't raise errors for missing fields
         if models["name"] == "dataclasses":
             pytest.skip("Dataclasses don't raise errors for missing required fields")
@@ -826,11 +826,11 @@ class TestSerializationErrors:
         self, serializer_models: dict, httpx_mock: HTTPXMock
     ):
         """Test that validator failures raise ResponseSerializationError.
-        
+
         Note: Only attrs and pydantic have validators in our models.
         """
         models = serializer_models
-        
+
         # Skip for serializers without validators
         if models["name"] not in ["attrs", "pydantic"]:
             pytest.skip(f"{models['name']} model doesn't have validators in test setup")
